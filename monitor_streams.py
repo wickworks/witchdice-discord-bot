@@ -1,10 +1,10 @@
 import os
 import json
-import pyrebase
+# import pyrebase
 
-# import firebase_admin
-# from firebase_admin import credentials
-# from firebase_admin import db
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
 
 import discord
 from discord.ext import tasks, commands
@@ -14,107 +14,47 @@ class MonitorStreams(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # configure firebase db connection
-        config = {
-            "apiKey": os.getenv('FIREBASE_API_KEY'),
-            "authDomain": "roll-to-hit.firebaseapp.com",
-            "databaseURL": "https://roll-to-hit.firebaseio.com",
-            "storageBucket": "roll-to-hit.appspot.com"
-        }
-        self.db = pyrebase.initialize_app(config).database()
+        # # configure firebase db connection
+        # config = {
+        #     "apiKey": os.getenv('FIREBASE_API_KEY'),
+        #     "authDomain": "roll-to-hit.firebaseapp.com",
+        #     "databaseURL": "https://roll-to-hit.firebaseio.com",
+        #     "storageBucket": "roll-to-hit.appspot.com"
+        # }
+        # self.db = pyrebase.initialize_app(config).database()
 
-        # # Fetch the service account key JSON file contents
-        # cred = credentials.Certificate('firebase_auth.json')
+        # Fetch the service account key JSON file contents
+        cred = credentials.Certificate('firebase_auth.json')
         #
-        # # Initialize the app with a None auth variable, limiting the server's access
-        # firebase_admin.initialize_app(cred, {
-        #     'databaseURL': 'https://roll-to-hit.firebaseio.com',
-        #     'databaseAuthVariableOverride': None
-        # })
+        # Initialize the app with a None auth variable, limiting the server's access
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': 'https://roll-to-hit.firebaseio.com',
+            'databaseAuthVariableOverride': None
+        })
 
         # initialize the room and stream variables
         self.rooms = {}
-        self.streams = {}
-
-        # Kick off the monitoring background task
-        self.monitor_room_streams.start()
 
     def cog_unload(self):
         print('   Unloading monitor_streams cog, have a nice day.')
 
-    # Check streams for changes from firebase every second
-    @tasks.loop(seconds=5.0)
-    async def monitor_room_streams(self):
-        print('staying alive, staying alive...')
 
-        # print(f"Checking streams... {self.streams}")
-        for stream_name, stream_feed in self.streams.items():
-            print(f"looking in stream.... {stream_feed}")
-            print(dir(stream_feed))
-
-            for msg in stream_feed:
-                print("   found message in stream!")
-                if msg:
-                    msg_data = json.loads(msg.data)
-                    if msg_data['data'] is not None:
-                        # print(f"   msg_data! {msg_data}")
-                        msg_data["event"] = msg.event
-                        msg_data["stream_id"] = stream_name
-                        await self.roll_stream_handler(msg_data)
-                        print('end is not None')
-                    print('end if msg')
-                print('end msg in stream_feed')
-                break
-            break
-
-            print('end for stream_name')
-        print('end monitor_room_streams')
-
-
-    # Initialize 'rooms' from rooms.json and creates corresponding streams.
-    @monitor_room_streams.before_loop
-    async def initialize_streams(self):
+    @commands.Cog.listener()
+    async def on_ready(self):
         print('Waiting for bot to be ready...')
         await self.bot.wait_until_ready()
 
         print("Loading Rooms")
         self.rooms = json.load(open('rooms.json', 'r'))
 
-        print("Creating Streams:")
-        for stream_path in set(self.rooms.keys()):
-            print(f"    - for {stream_path}")
-            self.create_stream(stream_path)
-
-
-    # Create a persistant connection to firebase to listen for changes in a room
-    def create_stream(self, room_name):
-        print(f"        creating stream for room : {room_name}")
+        print("Listening for rolls:")
         try:
-            stream = self.db.child("rolls").child(room_name)
-            sse = pyrebase.pyrebase.ClosableSSEClient(
-                stream.build_request_url(None),
-                session=pyrebase.pyrebase.KeepAuthSession(),
-                build_headers=stream.build_headers
-            )
-            self.streams[room_name] = sse
-
-            # firebase_admin.db.child("rolls").child(room_name).listen(self.roll_stream_handler)
-            # FUTURE PROBLEM: this fires every hour regardless of changes. For many bots,
-            # that will add up.
-            # firebase_admin.db.reference(f"rolls/{room_name}").listen(self.roll_stream_handler)
-
-            print("     started listening!")
-            return sse
-
-        # except requests.exceptions.HTTPError as e:
-        #     print(e)
-        #     return None
-
+            firebase_admin.db.reference("rolls").listen(self.roll_stream_handler)
         except Exception as e:
-            print(f'   create_stream listener exception :: {e}')
-            return {}
+            print(e)
 
-    # Process data coming from Witchdice
+    # #
+    # # Process data coming from Witchdice
     async def roll_stream_handler(self, message):
         print(f"      roll_stream_handler for message {message}")
         #

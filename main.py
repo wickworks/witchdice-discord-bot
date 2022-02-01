@@ -16,13 +16,12 @@ WITCHBOT_TOKEN = os.getenv('WITCHBOT_TOKEN')
 bot = commands.Bot(command_prefix='~', description='Witchdice Discord Integration')
 
 if __name__ == '__main__':
+    @bot.event
+    async def on_ready():
+        print(f'\n\nLogged in as: {bot.user.name} - {bot.user.id}\nVersion: {discord.__version__}\n')
+
     bot.add_cog(MonitorStreams(bot))
-
-@bot.event
-async def on_ready():
-    print(f'\n\nLogged in as: {bot.user.name} - {bot.user.id}\nVersion: {discord.__version__}\n')
-
-bot.run(WITCHBOT_TOKEN, bot=True, reconnect=True)
+    bot.run(WITCHBOT_TOKEN, bot=True, reconnect=True)
 
 # if __name__ == "__main__":
 #     test_roll = {
