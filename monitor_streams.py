@@ -109,22 +109,20 @@ class MonitorStreams(commands.Cog):
     # ======================= TEXT COMMANDS ============================
     # ==================================================================
 
-    @commands.command(pass_context=True)
-    async def add_room(ctx, room_name: str):
+    @commands.command(name='join', pass_context=True)
+    async def join_room(self, ctx, room_name: str):
         print(f"ADDING ROOM {room_name}")
+        stripped_room_name = room_name.strip()
 
-        global rooms
-        l_room_name = room_name.strip().lower()
-
-        if l_room_name in rooms.keys():
-            rooms[l_room_name] = rooms[l_room_name].append(ctx.message.channel.id)
+        if stripped_room_name in self.rooms.keys():
+            self.rooms[stripped_room_name] = self.rooms[stripped_room_name].append(ctx.message.channel.id)
         else:
-            rooms[l_room_name] = [ctx.message.channel.id]
-            self.create_stream(l_room_name)
+            self.rooms[stripped_room_name] = [ctx.message.channel.id]
+            self.create_stream(stripped_room_name)
 
-        # Save the re-load room
-        open('rooms.json', 'w').write(json.dumps(rooms, indent=2))
-        rooms = json.load(open('rooms.json', 'r'))
+            print('    saving to rooms.json')
+            open('rooms.json', 'w').write(json.dumps(self.rooms, indent=2))
+            # self.rooms = json.load(open('rooms.json', 'r'))
 
 
 
