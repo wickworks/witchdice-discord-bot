@@ -9,4 +9,5 @@ https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permission
 # Dependencies
 python3 -m pip install -U discord.py
 python3 -m pip install -U pyrebase
+python3 -m pip install -U firebase_admin
 python3 -m pip install -U python-dotenv

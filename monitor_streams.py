@@ -1,8 +1,11 @@
 import os
-import pyrebase
 import json
-import discord
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+
+import discord
 from discord.ext import tasks, commands
 
 
@@ -10,44 +13,59 @@ class MonitorStreams(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # configure firebase db connection
-        config = {
-            "apiKey": os.getenv('FIREBASE_API_KEY'),
-            "authDomain": "roll-to-hit.firebaseapp.com",
-            "databaseURL": "https://roll-to-hit.firebaseio.com",
-            "storageBucket": "roll-to-hit.appspot.com"
-        }
-        self.db = pyrebase.initialize_app(config).database()
+        # # configure firebase db connection
+        # config = {
+        #     "apiKey": os.getenv('FIREBASE_API_KEY'),
+        #     "authDomain": "roll-to-hit.firebaseapp.com",
+        #     "databaseURL": "https://roll-to-hit.firebaseio.com",
+        #     "storageBucket": "roll-to-hit.appspot.com"
+        # }
+        # self.db = pyrebase.initialize_app(config).database()
+
+        # Fetch the service account key JSON file contents
+        cred = credentials.Certificate('firebase_auth.json')
+
+        # Initialize the app with a None auth variable, limiting the server's access
+        firebase_admin.initialize_app(cred, {
+            'databaseURL': 'https://roll-to-hit.firebaseio.com',
+            'databaseAuthVariableOverride': None
+        })
+
+
+        # The app only has access as defined in the Security Rules
+        # ref = db.reference('/some_resource')
+        # print(ref.get())
+
 
         # initialize the room and stream variables
         self.rooms = {}
-        self.streams = {}
+        # self.streams = {}
 
         # Kick off the monitoring background task
         self.monitor_room_streams.start()
-
 
     def cog_unload(self):
         print('   Unloading monitor_streams cog, have a nice day.')
 
     # Check streams for changes from firebase every second
-    @tasks.loop(seconds=5.0)
+    @tasks.loop(seconds=15.0)
     async def monitor_room_streams(self):
-        print(f"Checking streams... {self.streams}")
+        print('staying alive, staying alive...')
 
-        for stream_name, stream_feed in self.streams.items():
-            print(f"looking in stream.... {stream_name}")
-
-            for msg in stream_feed:
-                print(f"   found message in stream! {msg}")
-                if msg:
-                    msg_data = json.loads(msg.data)
-                    if msg_data['data'] is not None:
-                        print(f"   msg_data! {msg_data}")
-                        msg_data["event"] = msg.event
-                        msg_data["stream_id"] = stream_name
-                        await self.roll_stream_handler(msg_data)
-                        print('+++++ REALLY finished waiting for roll stream event +++')
+        # print(f"Checking streams... {self.streams}")
+        # for stream_name, stream_feed in self.streams.items():
+        #     print(f"looking in stream.... {stream_name}")
+        #
+        #     for msg in stream_feed:
+        #         print(f"   found message in stream! {msg}")
+        #         if msg:
+        #             msg_data = json.loads(msg.data)
+        #             if msg_data['data'] is not None:
+        #                 print(f"   msg_data! {msg_data}")
+        #                 msg_data["event"] = msg.event
+        #                 msg_data["stream_id"] = stream_name
+        #                 await self.roll_stream_handler(msg_data)
+        #                 print('+++++ REALLY finished waiting for roll stream event +++')
 
     # Initialize 'rooms' from rooms.json and creates corresponding streams.
     @monitor_room_streams.before_loop
@@ -60,49 +78,61 @@ class MonitorStreams(commands.Cog):
 
         print("Creating Streams:")
         for stream_path in set(self.rooms.keys()):
-            print(stream_path)
-            self.streams[stream_path] = self.create_stream(stream_path)
+            print(f"    - for {stream_path}")
+            self.create_stream(stream_path)
+            # print(stream_path)
+            # self.streams[stream_path] = self.create_stream(stream_path)
 
 
     # Create a persistant connection to firebase to listen for changes in a room
     def create_stream(self, room_name):
-        print(f"creating stream for room : {room_name}")
+        print(f"        creating stream for room : {room_name}")
         try:
-            stream = self.db.child("rolls").child(room_name)
-            sse = pyrebase.pyrebase.ClosableSSEClient(stream.build_request_url(None), session=pyrebase.pyrebase.KeepAuthSession(), build_headers=stream.build_headers)
+            # stream = self.db.child("rolls").child(room_name)
+            # sse = pyrebase.pyrebase.ClosableSSEClient(stream.build_request_url(None), session=pyrebase.pyrebase.KeepAuthSession(), build_headers=stream.build_headers)
+            # firebase_admin.db.child("rolls").child(room_name).listen(self.roll_stream_handler)
 
-            print(f"     created stream:{stream}")
-            return sse
+            # FUTURE PROBLEM: this fires every hour regardless of changes. For many bots,
+            # that will add up.
+            firebase_admin.db.reference(f"rolls/{room_name}").listen(self.roll_stream_handler)
 
-        except requests.exceptions.HTTPError as e:
-            print(e)
+            print("     started listening!")
+            # return sse
+            return None
+
+        # except requests.exceptions.HTTPError as e:
+        #     print(e)
+        #     return None
+
+        except Exception as e:
+            print(f'   create_stream listener exception :: {e}')
             return None
 
     # Process data coming from Witchdice
-    async def roll_stream_handler(self, message):
-        print(f"      roll_stream_handler for message {message}")
+    def roll_stream_handler(self, event):
+        print(f"      roll_stream_handler for event {event}")
 
-        data = message["data"]
-        room_name = message["stream_id"]
-
-        if room_name in self.rooms.keys():
-            for channel_id in self.rooms[room_name]:
-                channel = self.bot.get_channel(int(channel_id))
-
-                embed = parse_roll(data)
-
-                try:
-                    print(f"     sending a buncha data to discord...")
-                    # await channel.send(f"_{data.get('name', '[UNKNOWN]')}_", embed=embed)
-                    await channel.send('hi!')
-                    print('          finished send')
-
-                except KeyError as e:
-                    print(e)
-        else:
-            print(f"{room_name}: Not found in current list of rooms... what?")
-
-        print('-- finished handling a roll stream event ---')
+        # data = message["data"]
+        # room_name = message["stream_id"]
+        #
+        # if room_name in self.rooms.keys():
+        #     for channel_id in self.rooms[room_name]:
+        #         channel = self.bot.get_channel(int(channel_id))
+        #
+        #         embed = parse_roll(data)
+        #
+        #         try:
+        #             print(f"     sending a buncha data to discord...")
+        #             # await channel.send(f"_{data.get('name', '[UNKNOWN]')}_", embed=embed)
+        #             await channel.send('hi!')
+        #             print('          finished send')
+        #
+        #         except KeyError as e:
+        #             print(e)
+        # else:
+        #     print(f"{room_name}: Not found in current list of rooms... what?")
+        #
+        # print('-- finished handling a roll stream event ---')
 
 
     # ==================================================================
