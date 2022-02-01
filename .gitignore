@@ -2,3 +2,4 @@
 rooms.json
 firebase_auth.json
 __pycache__/monitor_streams.cpython-37.pyc
+node_modules/*
