@@ -1,3 +1,4 @@
+import os
 import discord
 import pyrebase
 import requests
@@ -5,8 +6,12 @@ import json
 import asyncio
 
 from discord.ext import commands
+from dotenv import load_dotenv
 
-bot = commands.Bot(command_prefix='~', description='Witch Dice Discord Integration')
+load_dotenv()
+WITCHBOT_TOKEN = os.getenv('WITCHBOT_TOKEN')
+
+bot = commands.Bot(command_prefix='~', description='Witchdice Discord Integration')
 
 config = {
     "apiKey": "AIzaSyBQJ2LG4nrCBhoIxg94rYi7AzzNf-GqgTM",
@@ -20,9 +25,11 @@ db = firebase.database()
 
 rooms = {}
 
-
+# Process data coming from Witchdice
 async def roll_stream_handler(message):
     global rooms
+
+    print(f"roll_stream_handler for message {message}")
 
     data = message["data"]
     room_name = message["stream_id"]
@@ -44,6 +51,8 @@ async def roll_stream_handler(message):
 
 @bot.command(pass_context=True)
 async def add_room(ctx, room_name: str):
+    print(f"ADDING ROOM {room_name}")
+
     global rooms
     l_room_name = room_name.strip().lower()
 
@@ -65,38 +74,45 @@ async def room_check():
     print("Loading Rooms")
     rooms = json.load(open('rooms.json', 'r'))
 
+    print("Bot Wait Until Ready")
     await bot.wait_until_ready()
 
     print("Creating Streams")
     for stream_path in set(rooms.keys()):
         streams[stream_path] = create_stream(stream_path)
+        # create_stream(stream_path)
 
-    print("Looping")
+    print("Looping stream monitor")
     while True:
         print("Beep")
         for stream_name, stream_feed in streams.items():
             for msg in stream_feed:
+                print(f"found message in stream! {msg}")
                 if msg:
                     msg_data = json.loads(msg.data)
-                    msg_data["event"] = msg.event
-                    msg_data["stream_id"] = stream_name
-
-                    await roll_stream_handler(msg_data)
+                    if msg_data['data'] is not None:
+                        print(f"   msg_data! {msg_data}")
+                        msg_data["event"] = msg.event
+                        msg_data["stream_id"] = stream_name
+                        await roll_stream_handler(msg_data)
 
         print("Boop")
         await asyncio.sleep(1)
 
 
 def create_stream(room_name):
+    print(f"creating stream for room : {room_name}")
     try:
         stream = db.child("rolls").child(room_name)
         sse = pyrebase.pyrebase.ClosableSSEClient(stream.build_request_url(None), session=pyrebase.pyrebase.KeepAuthSession(), build_headers=stream.build_headers)
 
+        print(f"     created stream:{stream}")
         return sse
 
     except requests.exceptions.HTTPError as e:
         print(e)
         return None
+
 
 
 def parse_roll(roll_msg_data):
@@ -225,5 +241,4 @@ if __name__ == "__main__":
 
     bot.loop.create_task(room_check())
 
-    # bot.run(open('token.txt', 'r').read())
-    bot.run(os.getenv('WITCHBOT_TOKEN'))
+    bot.run(WITCHBOT_TOKEN)
