@@ -75,10 +75,19 @@ client.on('interactionCreate', async interaction => {
 
   console.log('   commandName', commandName);
 
-	if (commandName === 'join-room') {
+
+  let replyString = '';
+	switch (commandName) {
+  case 'join-room':
     const roomName = options.getString('room')
-    const replyString = joinRoom(channelId, roomName)
+    replyString = joinRoom(channelId, roomName)
 		await interaction.reply(replyString)
+    break;
+  case 'current-room':
+    replyString = sayCurrentRoom(channelId)
+    await interaction.reply(replyString)
+    break;
+  default: break;
 	}
 });
 
@@ -120,17 +129,37 @@ function joinRoom(channelID, roomName){
   return replyString
 }
 
+function sayCurrentRoom(channelID){
+  console.log(`Current room for channel : ${channelID}`);
+  let replyString = ''
+  const roomName = allConnectedChannels[channelID]
+
+  if (roomName) {
+    replyString = `This channel is listening to the room \`${roomName}\`. \n Make rolls on Witchdice at https://witchdice.com/simple?r=${roomName}`
+  } else {
+    replyString = 'This channel is not part of a Witchdice room. Join one with the \join-room command.'
+  }
+
+  return replyString
+}
+
+
 // set up the listeners for a room
 function listenForRolls(channelID, roomName) {
   console.log('    Creating listeners for room', roomName,' to channel ', channelID);
-  // const channel = client.channels.cache.get(channelID);
 
   const dbRollsRef = database.ref().child('rolls').child(roomName)
   dbRollsRef.on('child_changed', (snapshot) => {
-    if (snapshot) { console.log('roll changed!', snapshot.val()) }
+    if (snapshot) {
+      console.log('child_changed');
+      sendMessagetoChannel(channelID, snapshot.val())
+    }
   });
   dbRollsRef.on('child_added', (snapshot) => {
-    if (snapshot) { console.log('roll added!', snapshot.val()) }
+    if (snapshot) {
+      console.log('child_added');
+      sendMessagetoChannel(channelID, snapshot.val())
+    }
   });
 }
 
@@ -138,6 +167,15 @@ function listenForRolls(channelID, roomName) {
 // ------------ UTILS ------------
 // ------------------------------------
 
+function sendMessagetoChannel(channelID, message) {
+  console.log('getting channel');
+  const channel = client.channels.cache.get(channelID);
+  console.log('sending message channel');
+  if (channel) {
+    console.log('>>>>> To',channelID,' ::: ',message);
+    // channel.send(JSON.stringify(message));
+  }
+}
 
 
 // POTENTIAL RACE CONDITION HERE!!!!

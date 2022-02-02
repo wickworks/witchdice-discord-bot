@@ -12,6 +12,9 @@ const commands = [
       .setDescription('Name of the room to join (matching the one you have on Witchdice).')
       .setRequired(true)
     ),
+  new SlashCommandBuilder()
+    .setName('current-room')
+    .setDescription('Returns the name of the room the current channel is listening to.'),
 	// new SlashCommandBuilder().setName('server').setDescription('Replies with server info!'),
 	// new SlashCommandBuilder().setName('user').setDescription('Replies with user info!'),
 ].map(command => command.toJSON());
