@@ -4,7 +4,14 @@ const { Routes } = require('discord-api-types/v9');
 const { clientId, guildId, token } = require('./config.json');
 
 const commands = [
-	new SlashCommandBuilder().setName('join-room').setDescription('Sets up the current channel to recieve dice rolls from a Witchdice room.'),
+	new SlashCommandBuilder()
+    .setName('join-room')
+    .setDescription('Sets up the current channel to recieve dice rolls from a Witchdice room.')
+    .addStringOption(option => option
+      .setName('room')
+      .setDescription('Name of the room to join (matching the one you have on Witchdice).')
+      .setRequired(true)
+    ),
 	// new SlashCommandBuilder().setName('server').setDescription('Replies with server info!'),
 	// new SlashCommandBuilder().setName('user').setDescription('Replies with user info!'),
 ].map(command => command.toJSON());
