@@ -3,6 +3,8 @@ const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
 
+const parseRoll = require('./src/parseRolls.js');
+
 // const { initializeApp } = require("firebase/app");
 // const { getDatabase } = require("firebase/database");
 
@@ -152,13 +154,13 @@ function listenForRolls(channelID, roomName) {
   dbRollsRef.on('child_changed', (snapshot) => {
     if (snapshot) {
       console.log('child_changed');
-      sendMessagetoChannel(channelID, snapshot.val())
+      processSnapshot(snapshot, channelID, roomName)
     }
   });
   dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added');
-      sendMessagetoChannel(channelID, snapshot.val())
+      processSnapshot(snapshot, channelID, roomName)
     }
   });
 }
@@ -167,13 +169,20 @@ function listenForRolls(channelID, roomName) {
 // ------------ UTILS ------------
 // ------------------------------------
 
+function processSnapshot(snapshot, channelID, roomName) {
+  const embed = parseRoll(snapshot.val(), roomName)
+  sendMessagetoChannel(channelID, {embeds: [embed]})
+}
+
 function sendMessagetoChannel(channelID, message) {
-  console.log('getting channel');
-  const channel = client.channels.cache.get(channelID);
-  console.log('sending message channel');
-  if (channel) {
-    console.log('>>>>> To',channelID,' ::: ',message);
-    // channel.send(JSON.stringify(message));
+  try {
+    const channel = client.channels.cache.get(channelID);
+    if (channel && message) {
+      console.log('>>>>> To',channelID,' ::: ',message);
+      channel.send(message);
+    }
+  } catch (e) {
+    console.error('sendMessagetoChannel ERROR :', e)
   }
 }
 
