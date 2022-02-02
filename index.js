@@ -9,10 +9,10 @@ const WITCHBOT_TOKEN = process.env.WITCHBOT_TOKEN
 const CONNECTED_CHANNEL_FILE = 'rooms.json'
 let allConnectedChannels = {}
 
-const commands = [{
-  name: '~join',
-  description: 'The current channel joins a witchdice room.'
-}];
+// const allCommands = [{
+//   name: '~join',
+//   description: 'The current channel joins a witchdice room.'
+// }];
 
 // ------------------------------------
 // ------------ CREATE THE BOT ------------
@@ -20,15 +20,6 @@ const commands = [{
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	// Set a new item in the Collection
-	// With the key as the command name and the value as the exported module
-	client.commands.set(command.data.name, command);
-}
 // ------------------------------------
 // ------------ EVENTS ------------
 // ------------------------------------
@@ -46,18 +37,20 @@ client.once('ready', () => {
   });
 });
 
+client.on('interactionCreate', async interaction => {
+  console.log('triggered interaction!', interaction);
+  console.log('   is it a command? ',interaction.isCommand());
+	if (!interaction.isCommand()) return;
 
-// client.on('interactionCreate', async interaction => {
-// 	if (!interaction.isCommand()) return;
-//
-// 	const { commandName } = interaction;
-//
-// 	if (commandName === 'ping') {
-// 		await interaction.reply('Pong!');
-// 	} else if (commandName === 'beep') {
-// 		await interaction.reply('Boop!');
-// 	}
-// });
+	const { commandName } = interaction;
+
+  console.log('   commandName', commandName);
+
+	if (commandName === 'join-room') {
+		await interaction.reply('Room joined!');
+	}
+});
+
 
 // Login to Discord with your client's token
 client.login(WITCHBOT_TOKEN);

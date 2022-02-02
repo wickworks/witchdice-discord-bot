@@ -3,7 +3,7 @@ Discord integration for witchdice.com
 
 
 Invite with permissions link:
-https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permissions=395137088512&scope=bot
+https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permissions=294205384768&scope=bot%20applications.commands
 
 
 ## Installation Steps (if applicable)
