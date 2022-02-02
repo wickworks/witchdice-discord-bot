@@ -3,20 +3,21 @@ const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
 
-const { initializeApp } = require("firebase/app");
-const { getDatabase } = require("firebase/database");
+// const { initializeApp } = require("firebase/app");
+// const { getDatabase } = require("firebase/database");
 
-var firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: "roll-to-hit.firebaseapp.com",
-  databaseURL: "https://roll-to-hit.firebaseio.com",
-  projectId: "roll-to-hit",
-  storageBucket: "roll-to-hit.appspot.com",
-  messagingSenderId: "55772958032",
-  appId: "1:55772958032:web:42c2dc78d955a887293055",
-};
-const firebaseApp = initializeApp(firebaseConfig);
-const firebaseDB = getDatabase(firebaseApp)
+// const { initializeApp } = require('firebase-admin/app');
+const admin = require('firebase-admin');
+
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    databaseURL: 'https://roll-to-hit.firebaseio.com'
+});
+
+let database = admin.database();
+
+// const firebaseApp = initializeApp(firebaseConfig);
+// const firebaseDB = getDatabase(firebaseApp)
 
 // Development: point to the local firebase emulator instead of production
 // if (process.env.WITCHBOT_TOKEN === "development") {
@@ -124,7 +125,7 @@ function listenForRolls(channelID, roomName) {
   console.log('    Creating listeners for room', roomName,' to channel ', channelID);
   // const channel = client.channels.cache.get(channelID);
 
-  const dbRollsRef = firebaseDB.ref().child('rolls').child(roomName)
+  const dbRollsRef = database.ref().child('rolls').child(roomName)
   dbRollsRef.on('child_changed', (snapshot) => {
     if (snapshot) { console.log('roll changed!', snapshot.val()) }
   });
