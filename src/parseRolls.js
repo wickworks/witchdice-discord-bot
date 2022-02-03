@@ -66,9 +66,6 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
     }
 
 
-
-
-
     result_text = `-{{ ${result_text} }}-`
 
     // ~ what-was-rolled graph ~    (or one-liner if it was a simple roll)
@@ -76,37 +73,34 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
       rolls_text = `\`\`\`-{{ ${allRolls[0].result} }}-\`\`\``
 
     } else {
-      // // first "column" is five spaces wide, "total" | "  min" | "  max"
-      // type_line = " " * 5
-      // mode_text = {"low": "min", "high": "max", "total": "total"}
-      // results_line = (
-      //     mode_text[summary_mode] if summary_mode in mode_text else ""
-      // ).rjust(5, " ")
-      //
-      // // the following columns are: die type on top, results grouped below.
-      // group_join_char = "+" if summary_mode == "total" else ","
-      // for dietype in results_by_dietype:
-      //
-      //     // die type is easy
-      //     type_column = str(dietype)
-      //
-      //     // results need to be joined together with either a comma or plus, depending on the summation mode
-      //     result_strings = [str(result) for result in results_by_dietype[dietype]]
-      //     result_column = f"({group_join_char.join(result_strings)})"
-      //
-      //     // everything but the last group gets a +
-      //     if dietype != list(results_by_dietype)[-1]:
-      //         result_column += " +"
-      //
-      //     // keep the column the same length by padding the shorter row with spaces
-      //     column_width = max(len(type_column), len(result_column))
-      //     type_column = type_column.ljust(column_width, " ")
-      //     result_column = result_column.ljust(column_width, " ")
-      //
-      //     type_line += f" {type_column}"
-      //     results_line += f" {result_column}"
-      //
-      // rolls_text = f"```{type_line}\n{results_line}```"
+      // first "column" is five spaces wide, "total" | "  min" | "  max"
+      let type_line = " " * 5
+      let mode_text = {"low": "min", "high": "max", "total": "total"}
+      let results_line = (mode_text[summary_mode] || '').padEnd(5, " ")
+
+      // the following columns are: die type on top, results grouped below.
+      let group_join_char = summary_mode === "total" ? "+" : ","
+      Object.keys(resultsByDieType).forEach((dieType,i) => {
+        // die type is easy
+        let type_column = String(dieType)
+
+        // results need to be joined together with either a comma or plus, depending on the summation mode
+        result_strings = resultsByDieType[dieType].map(result => String(result))
+        result_column = `(${result_strings.join(group_join_char)})`
+
+        // everything but the last group gets a +
+        if (i !== Object.keys(resultsByDieType).length) result_column += " +"
+
+        // keep the column the same length by padding the shorter row with spaces
+        column_width = Math.max(type_column.length, result_column.length)
+        type_column = type_column.padStart(column_width, " ")
+        result_column = result_column.padStart(column_width, " ")
+
+        type_line += ` ${type_column}`
+        results_line += ` ${result_column}`
+      });
+
+      rolls_text = `\`\`\`${type_line}\n${results_line}\`\`\``
     }
 
     console.log(content_text)
