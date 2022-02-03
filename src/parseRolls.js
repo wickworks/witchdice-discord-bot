@@ -39,11 +39,13 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
       }
     })
 
+    console.log('resultsByDieType',resultsByDieType);
+
     // ~ character name ~
     content_text = rollSnapshot["name"] || "[UNKNOWN]"
 
     // ~ extra decorative text ~
-    decorative_text = "🌺 💀 🌺"
+    decorative_text = ""// "🌺 💀 🌺"
 
     // ~ summary // total ~
     if (summary_mode === "high") {
@@ -60,21 +62,20 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
       const all_values = allRolls.map(roll => roll.result)
       const sum = all_values.reduce((a,b) => a+b)
       result_text = String(sum).padEnd(2, " ")
-      console.log('all_values',all_values);
-      console.log('sum',sum);
-      console.log('result_text',result_text);
     }
 
 
-    result_text = `-{{ ${result_text} }}-`
+    // result_text = `-{{ ${result_text} }}-`
 
     // ~ what-was-rolled graph ~    (or one-liner if it was a simple roll)
     if (allRolls.length === 1) {
-      rolls_text = `\`\`\`-{{ ${allRolls[0].result} }}-\`\`\``
+      // rolls_text = `\`\`\`-{{ ${allRolls[0].dieType} }}-\`\`\``
+      // rolls_text = `\`\`\`${allRolls[0].dieType}\`\`\``
+      result_text = `${result_text}         \`d20\``
 
     } else {
       // first "column" is five spaces wide, "total" | "  min" | "  max"
-      let type_line = " " * 5
+      let type_line = "     "
       let mode_text = {"low": "min", "high": "max", "total": "total"}
       let results_line = (mode_text[summary_mode] || '').padEnd(5, " ")
 
@@ -89,12 +90,12 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
         result_column = `(${result_strings.join(group_join_char)})`
 
         // everything but the last group gets a +
-        if (i !== Object.keys(resultsByDieType).length) result_column += " +"
+        if (i !== Object.keys(resultsByDieType).length-1) result_column += " +"
 
         // keep the column the same length by padding the shorter row with spaces
         column_width = Math.max(type_column.length, result_column.length)
-        type_column = type_column.padStart(column_width, " ")
-        result_column = result_column.padStart(column_width, " ")
+        type_column = type_column.padEnd(column_width, " ")
+        result_column = result_column.padEnd(column_width, " ")
 
         type_line += ` ${type_column}`
         results_line += ` ${result_column}`
@@ -120,9 +121,9 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
     const embed = new MessageEmbed()
     	.setColor('#ecbfc2')
     	.setTitle(result_text)
-    	.setAuthor({ name: decorative_text }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
+    	.setAuthor({ name: content_text }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
     	.setDescription(rolls_text)
-      .setFooter({ text: `${roomName} — ${rollSnapshot["createdAt"]}` })//, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
+      .setFooter({ text: `${roomName.substring(0,24)} — ${rollSnapshot["createdAt"]}` })//, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
 
       // .setURL('https://discord.js.org/')
     	// .setThumbnail('https://i.imgur.com/AfFp7pu.png')

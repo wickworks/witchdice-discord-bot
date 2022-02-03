@@ -183,10 +183,14 @@ async function editMessageInChannel(channelID, message, targetCreatedAt) {
   const targetMessage = messages.find(message =>
     parseInt(message.author.id) === parseInt(clientId) &&
     message.embeds.length > 0 &&
+    message.embeds[0].footer &&
+    message.embeds[0].footer.text &&
     message.embeds[0].footer.text.includes(targetCreatedAt)
   )
 
   if (targetMessage) {
+    console.log('editing message');
+    console.log(targetMessage);
     // console.log('>>>>> EDIT',channelID,' ::: ',message);
     targetMessage.edit(message)
   }
