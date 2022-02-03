@@ -1,4 +1,5 @@
 const { Client, Intents } = require('discord.js');
+const { clientId } = require('./config.json');
 const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
@@ -151,16 +152,22 @@ function listenForRolls(channelID, roomName) {
   console.log('    Creating listeners for room', roomName,' to channel ', channelID);
 
   const dbRollsRef = database.ref().child('rolls').child(roomName)
-  dbRollsRef.on('child_changed', (snapshot) => {
-    if (snapshot) {
-      console.log('child_changed');
-      processSnapshot(snapshot, channelID, roomName)
-    }
-  });
   dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added');
-      processSnapshot(snapshot, channelID, roomName)
+      const embed = parseRoll(snapshot.val(), roomName)
+      sendMessagetoChannel(channelID, {embeds: [embed]})
+    }
+  });
+
+  dbRollsRef.on('child_changed', (snapshot) => {
+    if (snapshot) {
+      console.log('child_changed');
+
+      const snapshotVal = snapshot.val()
+      const embed = parseRoll(snapshotVal, roomName)
+      const targetCreatedAt = snapshotVal['createdAt']
+      editMessageInChannel(channelID, {embeds: [embed]}, targetCreatedAt)
     }
   });
 }
@@ -169,16 +176,27 @@ function listenForRolls(channelID, roomName) {
 // ------------ UTILS ------------
 // ------------------------------------
 
-function processSnapshot(snapshot, channelID, roomName) {
-  const embed = parseRoll(snapshot.val(), roomName)
-  sendMessagetoChannel(channelID, {embeds: [embed]})
+async function editMessageInChannel(channelID, message, targetCreatedAt) {
+  const channel = client.channels.cache.get(channelID);
+  const messages = await channel.messages.fetch({ limit: 20 })
+
+  const targetMessage = messages.find(message =>
+    parseInt(message.author.id) === parseInt(clientId) &&
+    message.embeds.length > 0 &&
+    message.embeds[0].footer.text.includes(targetCreatedAt)
+  )
+
+  if (targetMessage) {
+    // console.log('>>>>> EDIT',channelID,' ::: ',message);
+    targetMessage.edit(message)
+  }
 }
 
 function sendMessagetoChannel(channelID, message) {
   try {
     const channel = client.channels.cache.get(channelID);
     if (channel && message) {
-      console.log('>>>>> To',channelID,' ::: ',message);
+      // console.log('>>>>> To',channelID,' ::: ',message);
       channel.send(message);
     }
   } catch (e) {

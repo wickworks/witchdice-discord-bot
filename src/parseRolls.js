@@ -122,7 +122,7 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
     	.setTitle(result_text)
     	.setAuthor({ name: decorative_text }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
     	.setDescription(rolls_text)
-      // .setFooter({ text: roomName })//, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
+      .setFooter({ text: `${roomName} — ${rollSnapshot["createdAt"]}` })//, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
 
       // .setURL('https://discord.js.org/')
     	// .setThumbnail('https://i.imgur.com/AfFp7pu.png')
