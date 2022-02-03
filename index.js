@@ -17,7 +17,7 @@ admin.initializeApp({
     databaseURL: 'https://roll-to-hit.firebaseio.com'
 });
 
-let database = admin.database();
+const database = admin.database();
 
 // const firebaseApp = initializeApp(firebaseConfig);
 // const firebaseDB = getDatabase(firebaseApp)
@@ -37,7 +37,9 @@ const readFile = (fileName) => util.promisify(fs.readFile)(fileName, 'utf8');
 // ------------------------------------
 const CONNECTED_CHANNEL_FILE = 'rooms.json'
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+
 let allConnectedChannels = {}
+let allConnectedChannelListeners = {} // a mirror of the former, but points to the listener objects
 
 // ------------------------------------
 // ------------ EVENTS ------------
@@ -90,6 +92,10 @@ client.on('interactionCreate', async interaction => {
     replyString = sayCurrentRoom(channelId)
     await interaction.reply(replyString)
     break;
+  case 'leave-room':
+    replyString = leaveCurrentRoom(channelId)
+    await interaction.reply(replyString)
+    break;
   default: break;
 	}
 });
@@ -117,6 +123,7 @@ function joinRoom(channelID, roomName){
 
     // It switched from another room to this one
     } else if (allConnectedChannels[channelID] !== roomName) {
+      stopListeningForRolls(channelID, roomName)
       replyString = `This channel has switched from the room '${allConnectedChannels[channelID]}' to '${roomName}'.`
       allConnectedChannels[channelID] = roomName
       saveConnectedChannels()
@@ -131,6 +138,18 @@ function joinRoom(channelID, roomName){
 
   return replyString
 }
+
+function leaveCurrentRoom(channelID){
+  console.log(`channel leaving room : ${channelID}`);
+  const roomName = allConnectedChannels[channelID]
+  let replyString = `This channel has left the room \`${roomName}\`. It will no longer show rolls from Witchdice.`
+  delete allConnectedChannels[channelID]
+  saveConnectedChannels()
+  stopListeningForRolls(channelID, roomName)
+
+  return replyString
+}
+
 
 function sayCurrentRoom(channelID){
   console.log(`Current room for channel : ${channelID}`);
@@ -147,12 +166,13 @@ function sayCurrentRoom(channelID){
 }
 
 
+
 // set up the listeners for a room
 function listenForRolls(channelID, roomName) {
   console.log('    Creating listeners for room', roomName,' to channel ', channelID);
 
   const dbRollsRef = database.ref().child('rolls').child(roomName)
-  dbRollsRef.on('child_added', (snapshot) => {
+  const addedListener = dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added');
       const embed = parseRoll(snapshot.val(), roomName)
@@ -160,7 +180,7 @@ function listenForRolls(channelID, roomName) {
     }
   });
 
-  dbRollsRef.on('child_changed', (snapshot) => {
+  const changedListener = dbRollsRef.on('child_changed', (snapshot) => {
     if (snapshot) {
       console.log('child_changed');
 
@@ -170,6 +190,29 @@ function listenForRolls(channelID, roomName) {
       editMessageInChannel(channelID, {embeds: [embed]}, targetCreatedAt)
     }
   });
+
+  // store references to these channels
+  allConnectedChannelListeners[channelID] = {
+    added: addedListener,
+    changed: changedListener
+  }
+}
+
+// disables the listeners from a channel and removes it from the array
+function stopListeningForRolls(channelID, roomName) {
+  const channelListeners = allConnectedChannelListeners[channelID]
+  if (channelListeners) {
+    console.log('channelListeners',channelListeners);
+
+    console.log('Stopping listeners for channel', channelID,);
+    const dbRollsRef = database.ref().child('rolls').child(roomName)
+    dbRollsRef.off('child_added', channelListeners.added)
+    dbRollsRef.off('child_changed', channelListeners.changed)
+    delete allConnectedChannelListeners[channelID]
+
+  } else {
+    console.error('Tried to remove listeners from channel', channelID, ', but they were not there!')
+  }
 }
 
 // ------------------------------------
@@ -191,6 +234,7 @@ async function editMessageInChannel(channelID, message, targetCreatedAt) {
   if (targetMessage) {
     console.log('editing message');
     console.log(targetMessage);
+    console.log('message COLOR', targetMessage.embeds[0].color);
     // console.log('>>>>> EDIT',channelID,' ::: ',message);
     targetMessage.edit(message)
   }
