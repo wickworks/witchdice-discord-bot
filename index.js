@@ -166,6 +166,10 @@ function sayCurrentRoom(channelID){
 }
 
 
+// ------------------------------------------------
+// ------------ LISTENER MANAGEMENT ---------------
+// ------------------------------------------------
+
 
 // set up the listeners for a room
 function listenForRolls(channelID, roomName) {
@@ -176,7 +180,13 @@ function listenForRolls(channelID, roomName) {
     if (snapshot) {
       console.log('child_added');
       const embed = parseRoll(snapshot.val(), roomName)
-      sendMessagetoChannel(channelID, {embeds: [embed]})
+
+      // on initial connection, we get a lot of old children. only show recent rolls.
+      var now = Date.now()
+      var cutoff = now - 60 * 1000 // 60 seconds ago
+      if (snapshot.val().createdAt > cutoff) { // within the last 60 seconds
+        sendMessagetoChannel(channelID, {embeds: [embed]})
+      }
     }
   });
 
@@ -232,9 +242,6 @@ async function editMessageInChannel(channelID, message, targetCreatedAt) {
   )
 
   if (targetMessage) {
-    console.log('editing message');
-    console.log(targetMessage);
-    console.log('message COLOR', targetMessage.embeds[0].color);
     // console.log('>>>>> EDIT',channelID,' ::: ',message);
     targetMessage.edit(message)
   }
