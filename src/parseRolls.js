@@ -152,7 +152,7 @@ function parseAttack(rollSnapshot, roomName) {
   let result_text = ""      // goes in embed title
   let rolls_text = ""       // goes in embed description
 
-  const MIN_WIDTH = 32
+  const MIN_WIDTH = 36
 
   author_name = rollSnapshot["char"] || rollSnapshot["name"]
   result_text = rollSnapshot["conditions"]
@@ -175,6 +175,9 @@ function parseAttack(rollSnapshot, roomName) {
     let applies = ''
     let attack_roll = ''
 
+    let made_save = false;
+    let save_dc = '';
+
     let damages = {}
 
     Object.keys(rollData).forEach(rollKey => {
@@ -182,32 +185,55 @@ function parseAttack(rollSnapshot, roomName) {
         case 'name': name = rollData[rollKey]; break;
         case 'applies': applies = rollData[rollKey]; break;
         case 'attack': attack_roll = rollData[rollKey]; break;
-        case 'didsave': break;
-        case 'save': break;
+        case 'didsave': made_save = !!rollData[rollKey]; break;
+        case 'save': save_dc = rollData[rollKey]; break;
         default: damages[rollKey] = rollData[rollKey]; break;
       }
     });
     let damageTypes = Object.keys(damages)
 
-
     let attack_line = ''
 
-    if (attack_roll)  attack_line += `❮ ${String(attack_roll)} ❯`
-    if (name) attack_line += `${name.padStart(MIN_WIDTH - attack_line.length, ' ')}`
+    // ATTACKS
+    if (attack_roll) {
 
-    attack_line += `\n`
+      // attack_line += `❮ ${String(attack_roll)} ❯ `
+      attack_line += `〔 ${String(attack_roll)} 〕`
+      if (name) attack_line += `${name.padStart(MIN_WIDTH - attack_line.length - 1, ' ')}`
+
+      attack_line += `\n`
+
+    // SAVES
+    } else if (save_dc) {
+      if (name) attack_line += name
+      attack_line += `${save_dc.padStart(MIN_WIDTH - attack_line.length, ' ')}`
+
+      attack_line += `\n`
+
+      if (made_save) {
+        attack_line += 'passed'.padStart(MIN_WIDTH, ' ')
+      } else {
+        attack_line += 'FAILED'.padStart(MIN_WIDTH, ' ')
+      }
+    }
 
     if (damageTypes.length > 0) {
-      attack_line += damageTypes
+      attack_line += `\n`
+      let damage_entries = damageTypes
         .map(damageType => `${damages[damageType]} ${damageType}`)
         .join(', ')
-    } else {
-      attack_line += '- miss -'
+      damage_entries = centerText(damage_entries, '—', MIN_WIDTH)
+      attack_line += damage_entries
+
+    } else if (!applies) {
+      attack_line += `\n`
+      attack_line += centerText('miss', '—', MIN_WIDTH)
     }
 
     if (applies) {
       let attack_width = attack_line.length
-      attack_line += `\n - ${applies.replaceAll('<br>',`\n - `)}`
+      attack_line += `\n`
+      attack_line += ` ∘ ${applies.replaceAll('<br>',`\n ∘ `)}`
     }
 
     attack_line += `\n`
@@ -233,8 +259,11 @@ function parseAttack(rollSnapshot, roomName) {
 
   // do we want to sum up all the damage?
   if (!skipTotal) {
-    rolls_text = result_text + `\n` + rolls_text // bump "advantage", etc to the second line
-    result_text = `${damageSum} damage`
+    // bump "advantage", etc to the second line
+    rolls_text = result_text + `\n` + rolls_text
+    result_text = ''
+    // show the damage total
+    if (damageSum > 0) result_text = `${damageSum} damage`
   }
 
   // inside a command, event listener, etc.
@@ -252,6 +281,14 @@ function parseAttack(rollSnapshot, roomName) {
 // ------------ UTILS ---------------
 // ----------------------------------
 
+function centerText(text, padChar, totalWidth) {
+  const SIDE_PADDING = (Math.max(totalWidth-text.length, 2)*.5) - 1
+
+  let returnText = ` ${text} `
+  returnText = ''.padEnd(SIDE_PADDING,padChar) + returnText + ''.padStart(SIDE_PADDING,padChar)
+  if (text.length % 2 === 1) returnText += padChar
+  return returnText
+}
 
 function getFooterObject(roomName, rollSnapshot) {
   return { text: `${roomName.substring(0,24)} — ${rollSnapshot["createdAt"]}` }
