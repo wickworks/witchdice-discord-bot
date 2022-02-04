@@ -116,20 +116,18 @@ function joinRoom(channelID, roomName){
   if (roomName) {
     // This channel wasn't connected to anything yet
     if (!(channelID in allConnectedChannels)) {
-      replyString = `This channel is now in the room '${roomName}'.`
       allConnectedChannels[channelID] = roomName
       saveConnectedChannels()
       listenForRolls(channelID, roomName)
+      replyString = `This channel is now in the room '${roomName}'.`
 
     // It switched from another room to this one
     } else if (allConnectedChannels[channelID] !== roomName) {
       stopListeningForRolls(channelID, roomName)
-      replyString = `This channel has switched from the room '${allConnectedChannels[channelID]}' to '${roomName}'.`
       allConnectedChannels[channelID] = roomName
       saveConnectedChannels()
       listenForRolls(channelID, roomName)
-
-      // TODO: leave the previous channel
+      replyString = `This channel has switched from the room '${allConnectedChannels[channelID]}' to '${roomName}'.`
 
     } else {
       replyString = `This channel was already in the room '${allConnectedChannels[channelID]}'!`

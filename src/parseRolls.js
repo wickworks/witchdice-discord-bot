@@ -4,30 +4,21 @@ const { MessageEmbed } = require('discord.js');
 module.exports = function parseRoll(rollSnapshot, roomName) {
   console.log('rollSnapshot',rollSnapshot)
 
-  let content_text = ""  // goes in message content
+  let content_text = ""     // goes in message content
   let decorative_text = ""  // goes in embed author name
-  let result_text = ""  // goes in embed title
-  let rolls_text = ""  // goes in embed description
+  let result_text = ""      // goes in embed title
+  let rolls_text = ""       // goes in embed description
 
   let summary_mode = rollSnapshot["conditions"]  // total | high | low
 
   console.log('summary_mode',summary_mode);
 
   // extracts the roll objects from the firebase data into just an array
-  // all_rolls = [roll[1] for roll in rollSnapshot.items() if "roll" in roll[0]]
   allRolls = Object.keys(rollSnapshot)
     .filter(eventKey => eventKey.startsWith('roll-'))
     .map(rollKey => rollSnapshot[rollKey])
 
   // Collect all results by dietype e.g. {'d4':[2,3,3], 'd20':[20]}
-  // results_by_dietype = {}
-  // for roll in all_rolls:
-  //     dietype = roll["dieType"]
-  //     result = roll["result"]
-  //     if dietype in results_by_dietype:
-  //         results_by_dietype[dietype].append(result)
-  //     else:
-  //         results_by_dietype[dietype] = [result]
   resultsByDieType = {}
   allRolls.forEach(roll => {
     const dieType = roll.dieType;
@@ -63,7 +54,6 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
     const sum = all_values.reduce((a,b) => a+b)
     result_text = String(sum).padEnd(2, " ")
   }
-
 
   // result_text = `-{{ ${result_text} }}-`
 
@@ -108,16 +98,6 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
   console.log(decorative_text)
   console.log(result_text)
   console.log(rolls_text)
-
-  // TODO: content_text needs to get to the bot.say() somehow; either return it alongside the embed or just do the .get("name") out there.
-  // embed = discord.Embed(
-  //     title=result_text,
-  //     description=rolls_text,
-  //     color=discord.Color(int("0x511D20", 16)),
-  // )  // Mutter the incantation and perform the hex
-  // embed.set_author(name=decorative_text)
-
-
 
   // inside a command, event listener, etc.
   const embed = new MessageEmbed()
