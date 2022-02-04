@@ -34,6 +34,7 @@ function parseDicebag(rollSnapshot, roomName) {
 
   // Collect all results by dietype e.g. {'d4':[2,3,3], 'd20':[20]}
   resultsByDieType = {}
+  signsByDieType = {}
   allRolls.forEach(roll => {
     const dieType = roll.dieType;
     const result = roll.result;
@@ -42,6 +43,7 @@ function parseDicebag(rollSnapshot, roomName) {
     } else {
       resultsByDieType[dieType] = [result]
     }
+    signsByDieType[dieType] = roll.sign // all die type groups are assumed to have the same sign ("total" doesn't use this)
   })
 
   console.log('resultsByDieType',resultsByDieType);
@@ -54,17 +56,17 @@ function parseDicebag(rollSnapshot, roomName) {
 
   // ~ summary // total ~
   if (summary_mode === "high") {
-    const high_values = Object.keys(resultsByDieType).map(dieType => Math.max(...resultsByDieType[dieType]))
+    const high_values = Object.keys(resultsByDieType).map(dieType => Math.max(...resultsByDieType[dieType]) * signsByDieType[dieType])
     const sum = high_values.reduce((a,b) => a+b)
     result_text = String(sum)
 
   } else if (summary_mode === "low") {
-    const low_values = Object.keys(resultsByDieType).map(dieType => Math.min(...resultsByDieType[dieType]))
+    const low_values = Object.keys(resultsByDieType).map(dieType => Math.min(...resultsByDieType[dieType]) * signsByDieType[dieType])
     const sum = low_values.reduce((a,b) => a+b)
     result_text = String(sum)
 
   } else { // "total"
-    const all_values = allRolls.map(roll => roll.result)
+    const all_values = allRolls.map(roll => roll.result * roll.sign)
     const sum = all_values.reduce((a,b) => a+b)
     result_text = String(sum)
   }
@@ -86,15 +88,27 @@ function parseDicebag(rollSnapshot, roomName) {
     // the following columns are: die type on top, results grouped below.
     let group_join_char = summary_mode === "total" ? "+" : ","
     Object.keys(resultsByDieType).forEach((dieType,i) => {
+      let type_column = ''
+      let result_column = ''
+
+      // Add a pseudo-column to both type and result with the sign of this group (skip for first group if it's positive)
+      if (i > 0 || signsByDieType[dieType] < 0) {
+        type_column += '  '
+        result_column += `${signsByDieType[dieType] < 0 ? '—' : '+'} `
+      }
+
       // die type is easy
-      let type_column = String(resultsByDieType[dieType].length) + String(dieType)
+      // type_column += String(resultsByDieType[dieType].length) + String(dieType)
+      type_column += String(dieType)
 
       // results need to be joined together with either a comma or plus, depending on the summation mode
-      result_strings = resultsByDieType[dieType].map(result => String(result))
-      result_column = `(${result_strings.join(group_join_char)})`
+      let result_strings = resultsByDieType[dieType].map(result => String(result))
+      result_column += `(${result_strings.join(group_join_char)})`
 
       // everything but the last group gets a +
-      if (i !== Object.keys(resultsByDieType).length-1) result_column += " +"
+      // if (i !== Object.keys(resultsByDieType).length-1) result_column += " +"
+
+
 
       // keep the column the same length by padding the shorter row with spaces
       column_width = Math.max(type_column.length, result_column.length)
