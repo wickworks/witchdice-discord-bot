@@ -4,13 +4,27 @@ const { MessageEmbed } = require('discord.js');
 module.exports = function parseRoll(rollSnapshot, roomName) {
   console.log('rollSnapshot',rollSnapshot)
 
-  let content_text = ""     // goes in message content
-  let decorative_text = ""  // goes in embed author name
+  let embed;
+
+  switch (rollSnapshot['type']) {
+  case 'dicebag':
+    embed = parseDicebag(rollSnapshot, roomName)
+    break;
+  case 'attack':
+    embed = parseAttack(rollSnapshot, roomName)
+    break;
+  }
+
+  return embed
+}
+
+
+function parseDicebag(rollSnapshot, roomName) {
+  let author_name = ""      // goes author name
   let result_text = ""      // goes in embed title
   let rolls_text = ""       // goes in embed description
 
   let summary_mode = rollSnapshot["conditions"]  // total | high | low
-
   console.log('summary_mode',summary_mode);
 
   // extracts the roll objects from the firebase data into just an array
@@ -33,10 +47,10 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
   console.log('resultsByDieType',resultsByDieType);
 
   // ~ character name ~
-  content_text = rollSnapshot["name"] || "[UNKNOWN]"
+  author_name = rollSnapshot["name"] || "[UNKNOWN]"
 
   // ~ extra decorative text ~
-  decorative_text = ""// "🌺 💀 🌺"
+  // decorative_text = ""// "🌺 💀 🌺"
 
   // ~ summary // total ~
   if (summary_mode === "high") {
@@ -94,18 +108,13 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
     rolls_text = `\`\`\`${type_line}\n${results_line}\`\`\``
   }
 
-  console.log(content_text)
-  console.log(decorative_text)
-  console.log(result_text)
-  console.log(rolls_text)
-
   // inside a command, event listener, etc.
   const embed = new MessageEmbed()
   	.setColor('#ecbfc2')
+    .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
   	.setTitle(result_text)
-  	.setAuthor({ name: content_text }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
   	.setDescription(rolls_text)
-    .setFooter({ text: `${roomName.substring(0,24)} — ${rollSnapshot["createdAt"]}` })//, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
+    .setFooter( getFooterObject(roomName, rollSnapshot) )
 
     // .setURL('https://discord.js.org/')
   	// .setThumbnail('https://i.imgur.com/AfFp7pu.png')
@@ -120,4 +129,117 @@ module.exports = function parseRoll(rollSnapshot, roomName) {
   	// .setTimestamp()
 
   return embed
+}
+
+
+
+function parseAttack(rollSnapshot, roomName) {
+  let author_name = ""      // goes author name
+  let result_text = ""      // goes in embed title
+  let rolls_text = ""       // goes in embed description
+
+  const MIN_WIDTH = 32
+
+  author_name = rollSnapshot["char"] || rollSnapshot["name"]
+  result_text = rollSnapshot["conditions"]
+
+  // extracts the roll objects from the firebase data into just an array
+  allRolls = Object.keys(rollSnapshot)
+    .filter(eventKey => eventKey.startsWith('roll-'))
+    .map(rollKey => rollSnapshot[rollKey])
+
+  // make the descriptive block of all the attacks in this snapshot
+  const skipTotal = !!rollSnapshot["skipTotal"]
+  let damageSum = 0
+
+  console.log('skipTotal',skipTotal);
+  console.log('rollSnapshot["skipTotal"]',rollSnapshot["skipTotal"]);
+
+  let attackLines = []
+  allRolls.forEach(rollData => {
+    let name = ''
+    let applies = ''
+    let attack_roll = ''
+
+    let damages = {}
+
+    Object.keys(rollData).forEach(rollKey => {
+      switch (rollKey) {
+        case 'name': name = rollData[rollKey]; break;
+        case 'applies': applies = rollData[rollKey]; break;
+        case 'attack': attack_roll = rollData[rollKey]; break;
+        case 'didsave': break;
+        case 'save': break;
+        default: damages[rollKey] = rollData[rollKey]; break;
+      }
+    });
+    let damageTypes = Object.keys(damages)
+
+
+    let attack_line = ''
+
+    if (attack_roll)  attack_line += `❮ ${String(attack_roll)} ❯`
+    if (name) attack_line += `${name.padStart(MIN_WIDTH - attack_line.length, ' ')}`
+
+    attack_line += `\n`
+
+    if (damageTypes.length > 0) {
+      attack_line += damageTypes
+        .map(damageType => `${damages[damageType]} ${damageType}`)
+        .join(', ')
+    } else {
+      attack_line += '- miss -'
+    }
+
+    if (applies) {
+      let attack_width = attack_line.length
+      attack_line += `\n - ${applies.replaceAll('<br>',`\n - `)}`
+    }
+
+    attack_line += `\n`
+
+    attackLines.push(attack_line)
+
+    // sum up the damage
+    if (!skipTotal) {
+      damageTypes.forEach(damageType => {
+        const damage = parseInt(damages[damageType])
+        console.log('summing up damage',damages[damageType],' :::', damage);
+        if (damage) damageSum += Math.floor(damage)
+      });
+    }
+
+    console.log(attack_line);
+  });
+
+  // assemble the final rolls text
+  rolls_text = '```'
+  rolls_text += attackLines.join('```\n```')
+  rolls_text += '```'
+
+  // do we want to sum up all the damage?
+  if (!skipTotal) {
+    rolls_text = result_text + `\n` + rolls_text // bump "advantage", etc to the second line
+    result_text = `${damageSum} damage`
+  }
+
+  // inside a command, event listener, etc.
+  const embed = new MessageEmbed()
+  	.setColor('#ecbfc2')
+    .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
+  	.setTitle(result_text)
+  	.setDescription(rolls_text)
+    .setFooter( getFooterObject(roomName, rollSnapshot) )
+
+  return embed
+}
+
+// ----------------------------------
+// ------------ UTILS ---------------
+// ----------------------------------
+
+
+function getFooterObject(roomName, rollSnapshot) {
+  return { text: `${roomName.substring(0,24)} — ${rollSnapshot["createdAt"]}` }
+  //, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
 }
