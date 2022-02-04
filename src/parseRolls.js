@@ -56,26 +56,26 @@ function parseDicebag(rollSnapshot, roomName) {
   if (summary_mode === "high") {
     const high_values = Object.keys(resultsByDieType).map(dieType => Math.max(...resultsByDieType[dieType]))
     const sum = high_values.reduce((a,b) => a+b)
-    result_text = String(sum).padEnd(2, " ")
+    result_text = String(sum)
 
   } else if (summary_mode === "low") {
     const low_values = Object.keys(resultsByDieType).map(dieType => Math.min(...resultsByDieType[dieType]))
     const sum = low_values.reduce((a,b) => a+b)
-    result_text = String(sum).padEnd(2, " ")
+    result_text = String(sum)
 
   } else { // "total"
     const all_values = allRolls.map(roll => roll.result)
     const sum = all_values.reduce((a,b) => a+b)
-    result_text = String(sum).padEnd(2, " ")
+    result_text = String(sum)
   }
 
-  // result_text = `-{{ ${result_text} }}-`
+  result_text = `⦑  ${result_text}  ⦒`
 
   // ~ what-was-rolled graph ~    (or one-liner if it was a simple roll)
   if (allRolls.length === 1) {
     // rolls_text = `\`\`\`-{{ ${allRolls[0].dieType} }}-\`\`\``
     // rolls_text = `\`\`\`${allRolls[0].dieType}\`\`\``
-    result_text = `${result_text}         \`d20\``
+    result_text = `${result_text}                            \`d20\``
 
   } else {
     // first "column" is five spaces wide, "total" | "  min" | "  max"
@@ -87,7 +87,7 @@ function parseDicebag(rollSnapshot, roomName) {
     let group_join_char = summary_mode === "total" ? "+" : ","
     Object.keys(resultsByDieType).forEach((dieType,i) => {
       // die type is easy
-      let type_column = String(dieType)
+      let type_column = String(resultsByDieType[dieType].length) + String(dieType)
 
       // results need to be joined together with either a comma or plus, depending on the summation mode
       result_strings = resultsByDieType[dieType].map(result => String(result))
