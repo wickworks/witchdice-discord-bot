@@ -4,7 +4,7 @@ const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
 
-const parseRoll = require('./src/parseRolls.js');
+const parser = require('./src/parseRolls.js');
 
 // const { initializeApp } = require("firebase/app");
 // const { getDatabase } = require("firebase/database");
@@ -177,7 +177,7 @@ function listenForRolls(channelID, roomName) {
   const addedListener = dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added');
-      const embed = parseRoll(snapshot.val(), roomName)
+      const embed = parser.parseRoll(snapshot.val(), roomName)
 
       // on initial connection, we get a lot of old children. only show recent rolls.
       var now = Date.now()
@@ -193,7 +193,7 @@ function listenForRolls(channelID, roomName) {
       console.log('child_changed');
 
       const snapshotVal = snapshot.val()
-      const embed = parseRoll(snapshotVal, roomName)
+      const embed = parser.parseRoll(snapshotVal, roomName)
       const targetCreatedAt = snapshotVal['createdAt']
       editMessageInChannel(channelID, {embeds: [embed]}, targetCreatedAt)
     }
@@ -231,16 +231,21 @@ async function editMessageInChannel(channelID, message, targetCreatedAt) {
   const channel = client.channels.cache.get(channelID);
   const messages = await channel.messages.fetch({ limit: 20 })
 
+  const targetTimeColor = parser.getColorFromTime(targetCreatedAt)
+  const targetColorInt = parseInt(targetTimeColor, 16)
+
+
   const targetMessage = messages.find(message =>
     parseInt(message.author.id) === parseInt(clientId) &&
     message.embeds.length > 0 &&
-    message.embeds[0].footer &&
-    message.embeds[0].footer.text &&
-    message.embeds[0].footer.text.includes(targetCreatedAt)
+    message.embeds[0].color === targetColorInt
+    // message.embeds[0].footer &&
+    // message.embeds[0].footer.text &&
+    // message.embeds[0].footer.text.includes(targetCreatedAt)
   )
 
   if (targetMessage) {
-    // console.log('>>>>> EDIT',channelID,' ::: ',message);
+    console.log('>>>>> EDIT',channelID,' ::: ',message);
     targetMessage.edit(message)
   }
 }
@@ -249,7 +254,7 @@ function sendMessagetoChannel(channelID, message) {
   try {
     const channel = client.channels.cache.get(channelID);
     if (channel && message) {
-      // console.log('>>>>> To',channelID,' ::: ',message);
+      console.log('>>>>> SEND',channelID,' ::: ',message);
       channel.send(message);
     }
   } catch (e) {

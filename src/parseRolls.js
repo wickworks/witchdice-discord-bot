@@ -1,7 +1,7 @@
 const { MessageEmbed } = require('discord.js');
 
 
-module.exports = function parseRoll(rollSnapshot, roomName) {
+ const parseRoll = (rollSnapshot, roomName) => {
   console.log('rollSnapshot',rollSnapshot)
 
   let embed;
@@ -124,11 +124,11 @@ function parseDicebag(rollSnapshot, roomName) {
 
   // inside a command, event listener, etc.
   const embed = new MessageEmbed()
-  	.setColor('#ecbfc2')
+  	.setColor('#' + getColorFromTime(rollSnapshot["createdAt"]))
     .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
   	.setTitle(result_text)
   	.setDescription(rolls_text)
-    .setFooter( getFooterObject(roomName, rollSnapshot) )
+    // .setFooter( getFooterObject(roomName, rollSnapshot) )
 
     // .setURL('https://discord.js.org/')
   	// .setThumbnail('https://i.imgur.com/AfFp7pu.png')
@@ -268,11 +268,11 @@ function parseAttack(rollSnapshot, roomName) {
 
   // inside a command, event listener, etc.
   const embed = new MessageEmbed()
-  	.setColor('#ecbfc2')
+  	.setColor('#' + getColorFromTime(rollSnapshot["createdAt"]))
     .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
   	.setTitle(result_text)
   	.setDescription(rolls_text)
-    .setFooter( getFooterObject(roomName, rollSnapshot) )
+    // .setFooter( getFooterObject(roomName, rollSnapshot) )
 
   return embed
 }
@@ -280,6 +280,11 @@ function parseAttack(rollSnapshot, roomName) {
 // ----------------------------------
 // ------------ UTILS ---------------
 // ----------------------------------
+
+const getColorFromTime = (createdAt) => {
+  const createdAtHex = createdAt.toString(16)
+  return createdAtHex.substring(createdAtHex.length - 6)
+}
 
 function centerText(text, padChar, totalWidth) {
   const SIDE_PADDING = (Math.max(totalWidth-text.length, 2)*.5) - 1
@@ -290,7 +295,11 @@ function centerText(text, padChar, totalWidth) {
   return returnText
 }
 
-function getFooterObject(roomName, rollSnapshot) {
-  return { text: `${roomName.substring(0,24)} — ${rollSnapshot["createdAt"]}` }
-  //, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
-}
+// function getFooterObject(roomName, rollSnapshot) {
+//   return { text: `${roomName.substring(0,24)} — ${rollSnapshot["createdAt"]}` }
+//   //, iconURL: 'https://i.imgur.com/AfFp7pu.png' });
+// }
+
+
+exports.parseRoll = parseRoll
+exports.getColorFromTime = getColorFromTime
