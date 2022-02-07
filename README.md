@@ -8,16 +8,16 @@ https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permission
 
 ## Environment files:
 
+### .env
+DISCORD_TOKEN=BOT TOKEN HERE
+GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json
+
 ### config.json
 {
 	"clientId": "937850556272226374",
 	"guildId": "DEV GUILD HERE",
 	"token": "BOT TOKEN HERE"
 }
-
-### .env
-DISCORD_TOKEN=BOT TOKEN HERE
-GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json
 
 ### .firebase_auth.json  (this is generated in firebase)
 {
@@ -33,12 +33,27 @@ GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json
   "client_x509_cert_url": ""
 }
 
+## Starting up a VM instance in google cloud
+
+sudo apt-get -y update
+
+### upgrade node to 16+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+source ~/.bashrc
+nvm install v16.13.2
+
+git clone https://github.com/wickworks/witchdice-discord-bot.git
+
+< follow the below installation steps >
 
 
 ## Installation Steps (if applicable)
 
 1. Clone repo
 2. Run `npm install`
-3. Add Discord credentials in a `.env` file
-3. Run `node index.js`
-4. Interact with your Discord bot via your web browser
+3. Add Discord credentials in a `.env` file		(cat > .env, then paste in)
+4. Add config.json as outlined above
+5. Add firebase_auth.json as outlined above
+6. cat > room.json, then put in empty brackets: {}
+6. Run `node index.js`
+7. Interact with your Discord bot via your web browser
