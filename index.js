@@ -5,11 +5,6 @@ const util = require('util');
 require('dotenv').config();
 
 const parser = require('./src/parseRolls.js');
-
-// const { initializeApp } = require("firebase/app");
-// const { getDatabase } = require("firebase/database");
-
-// const { initializeApp } = require('firebase-admin/app');
 const admin = require('firebase-admin');
 
 admin.initializeApp({
@@ -18,14 +13,6 @@ admin.initializeApp({
 });
 
 const database = admin.database();
-
-// const firebaseApp = initializeApp(firebaseConfig);
-// const firebaseDB = getDatabase(firebaseApp)
-
-// Development: point to the local firebase emulator instead of production
-// if (process.env.WITCHBOT_TOKEN === "development") {
-//   firebase.database().useEmulator("localhost", 9000);
-// }
 
 // Convert fs.readFile into Promise version of same
 const readFile = (fileName) => util.promisify(fs.readFile)(fileName, 'utf8');
@@ -48,7 +35,6 @@ let allConnectedChannelListeners = {} // a mirror of the former, but points to t
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
   console.info(`Logged in as ${client.user}!`);
-  // initializeBot()
 
   loadAllConnectedChannels()
 });

@@ -1,9 +1,10 @@
 # witchdice-discord-bot
 Discord integration for witchdice.com
 
-
 Invite with permissions link:
 https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permissions=67584&scope=bot%20applications.commands
+
+Initial implementation by Shotch
 
 ## Environment files:
 
