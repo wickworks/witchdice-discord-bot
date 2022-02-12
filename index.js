@@ -192,7 +192,7 @@ function listenForRolls(channelID, roomName) {
     if (snapshot) {
       console.log('child_added EMOTE');
       const embed = emoteParser.parseEmote(snapshot.key, snapshot.val(), roomName)
-      if (wasCreatedWithinLastMinute(snapshot.val().createdAt)) {
+      if (wasCreatedWithinLastMinute(snapshot.val().time)) {
         sendMessagetoChannel(channelID, {embeds: [embed]})
       }
     }

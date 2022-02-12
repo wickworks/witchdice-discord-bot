@@ -15,6 +15,15 @@ Join a room by just adding it to room.json so the production bot doesn't know ab
 ## Watch the server on Google Compute Engine:
 pm2 logs
 
+## Deploy an update
+- SSH into the cloud
+- cd witchdice-discord-bot
+- pm2 kill
+- git pull
+- pm2 start index.js
+- pm2 save
+
+
 ## Installation Steps (if applicable)
 
 1. Clone repo
