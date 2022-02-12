@@ -16,6 +16,7 @@ Join a room by just adding it to room.json so the production bot doesn't know ab
 pm2 logs
 
 ## Deploy an update
+- Update the deployed branch to main.
 - SSH into the cloud
 - cd witchdice-discord-bot
 - pm2 kill
@@ -76,5 +77,7 @@ GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json`
 
 `sudo npm install -g pm2`
 `cd witchdice-discord-bot`
+`git checkout deployed`
+`git pull`
 `pm2 start index.js`
 `pm2 save`
