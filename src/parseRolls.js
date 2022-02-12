@@ -1,7 +1,7 @@
 const { MessageEmbed } = require('discord.js');
 
 
- const parseRoll = (rollSnapshot, roomName) => {
+const parseRoll = (rollSnapshot, roomName) => {
   console.log('rollSnapshot',rollSnapshot)
 
   let embed;

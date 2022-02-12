@@ -4,7 +4,8 @@ const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
 
-const parser = require('./src/parseRolls.js');
+const rollParser = require('./src/parseRolls.js');
+const emoteParser = require('./src/parseEmotes.js');
 const admin = require('firebase-admin');
 
 admin.initializeApp({
@@ -126,10 +127,14 @@ function joinRoom(channelID, roomName){
 function leaveCurrentRoom(channelID){
   console.log(`channel leaving room : ${channelID}`);
   const roomName = allConnectedChannels[channelID]
-  let replyString = `This channel has left the room \`${roomName}\`. It will no longer show rolls from Witchdice.`
-  delete allConnectedChannels[channelID]
-  saveConnectedChannels()
-  stopListeningForRolls(channelID, roomName)
+  if (roomName) {
+    let replyString = `This channel has left the room \`${roomName}\`. It will no longer show rolls from Witchdice.`
+    delete allConnectedChannels[channelID]
+    saveConnectedChannels()
+    stopListeningForRolls(channelID, roomName)
+  } else {
+    console.log("ERROR: could not leave room ", channelID, " because I don't think we were in it!");
+  }
 
   return replyString
 }
@@ -159,16 +164,13 @@ function sayCurrentRoom(channelID){
 function listenForRolls(channelID, roomName) {
   console.log('    Creating listeners for room', roomName,' to channel ', channelID);
 
+  // ======= ROLLS ======== //
   const dbRollsRef = database.ref().child('rolls').child(roomName)
   const addedListener = dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added');
-      const embed = parser.parseRoll(snapshot.val(), roomName)
-
-      // on initial connection, we get a lot of old children. only show recent rolls.
-      var now = Date.now()
-      var cutoff = now - 60 * 1000 // 60 seconds ago
-      if (snapshot.val().createdAt > cutoff) { // within the last 60 seconds
+      const embed = rollParser.parseRoll(snapshot.val(), roomName)
+      if (wasCreatedWithinLastMinute(snapshot.val().createdAt)) {
         sendMessagetoChannel(channelID, {embeds: [embed]})
       }
     }
@@ -177,18 +179,39 @@ function listenForRolls(channelID, roomName) {
   const changedListener = dbRollsRef.on('child_changed', (snapshot) => {
     if (snapshot) {
       console.log('child_changed');
-
       const snapshotVal = snapshot.val()
-      const embed = parser.parseRoll(snapshotVal, roomName)
+      const embed = rollParser.parseRoll(snapshotVal, roomName)
       const targetCreatedAt = snapshotVal['createdAt']
       editMessageInChannel(channelID, {embeds: [embed]}, targetCreatedAt)
+    }
+  });
+
+  // ======= EMOTES ======== //
+  const dbEmotesRef = database.ref().child('emotes').child(roomName)
+  const emoteAddedListener = dbEmotesRef.on('child_added', (snapshot) => {
+    if (snapshot) {
+      console.log('child_added EMOTE');
+      const embed = emoteParser.parseEmote(snapshot.key, snapshot.val(), roomName)
+      if (wasCreatedWithinLastMinute(snapshot.val().createdAt)) {
+        sendMessagetoChannel(channelID, {embeds: [embed]})
+      }
+    }
+  });
+
+  const emoteChangedListener = dbEmotesRef.on('child_changed', (snapshot) => {
+    if (snapshot) {
+      console.log('child_changed EMOTE');
+      const embed = emoteParser.parseEmote(snapshot.key, snapshot.val(), roomName)
+      sendMessagetoChannel(channelID, {embeds: [embed]})
     }
   });
 
   // store references to these channels
   allConnectedChannelListeners[channelID] = {
     added: addedListener,
-    changed: changedListener
+    changed: changedListener,
+    emoteAdded: emoteAddedListener,
+    emoteChanged: emoteChangedListener,
   }
 }
 
@@ -202,6 +225,9 @@ function stopListeningForRolls(channelID, roomName) {
     const dbRollsRef = database.ref().child('rolls').child(roomName)
     dbRollsRef.off('child_added', channelListeners.added)
     dbRollsRef.off('child_changed', channelListeners.changed)
+    const dbEmotesRef = database.ref().child('emotes').child(roomName)
+    dbEmotesRef.off('child_added', channelListeners.emoteAdded)
+    dbEmotesRef.off('child_changed', channelListeners.emoteChanged)
     delete allConnectedChannelListeners[channelID]
 
   } else {
@@ -217,7 +243,7 @@ async function editMessageInChannel(channelID, message, targetCreatedAt) {
   const channel = client.channels.cache.get(channelID);
   const messages = await channel.messages.fetch({ limit: 20 })
 
-  const targetTimeColor = parser.getColorFromTime(targetCreatedAt)
+  const targetTimeColor = rollParser.getColorFromTime(targetCreatedAt)
   const targetColorInt = parseInt(targetTimeColor, 16)
 
 
@@ -248,6 +274,12 @@ function sendMessagetoChannel(channelID, message) {
   }
 }
 
+// on initial connection, we get a lot of old children. only show recent rolls.
+function wasCreatedWithinLastMinute(createdAt) {
+  var now = Date.now()
+  var cutoff = now - 60 * 1000  // 60 seconds ago
+  return (createdAt > cutoff)   // within the last 60 seconds
+}
 
 // POTENTIAL RACE CONDITION HERE!!!!
 // If multiple people join rooms at once, one of them could get lost.
