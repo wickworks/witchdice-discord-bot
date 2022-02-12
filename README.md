@@ -6,8 +6,27 @@ https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permission
 
 Initial implementation by Shotch
 
-## Environment files:
+## Start the server:
+node index.js
 
+Join a room by just adding it to room.json so the production bot doesn't know about it.
+
+
+## Watch the server on Google Compute Engine:
+pm2 logs
+
+## Installation Steps (if applicable)
+
+1. Clone repo
+2. Run `npm install`
+3. Add Discord credentials in a `.env` file		(`cat > .env`, then paste in)
+4. Add config.json as outlined below
+5. Add firebase_auth.json as outlined below
+6. `cat > room.json`, then put in empty brackets: `{}`
+6. Run `node index.js`
+7. Interact with your Discord bot via your web browser
+
+## Environment files:
 ### .env
 `DISCORD_TOKEN=BOT TOKEN HERE
 GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json`
@@ -50,14 +69,3 @@ GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json`
 `cd witchdice-discord-bot`
 `pm2 start index.js`
 `pm2 save`
-
-## Installation Steps (if applicable)
-
-1. Clone repo
-2. Run `npm install`
-3. Add Discord credentials in a `.env` file		(`cat > .env`, then paste in)
-4. Add config.json as outlined above
-5. Add firebase_auth.json as outlined above
-6. `cat > room.json`, then put in empty brackets: `{}`
-6. Run `node index.js`
-7. Interact with your Discord bot via your web browser

@@ -77,7 +77,7 @@ function parseDicebag(rollSnapshot, roomName) {
   if (allRolls.length === 1) {
     // rolls_text = `\`\`\`-{{ ${allRolls[0].dieType} }}-\`\`\``
     // rolls_text = `\`\`\`${allRolls[0].dieType}\`\`\``
-    result_text = `${result_text}                            \`d20\``
+    result_text = `${result_text}                            \`${allRolls[0].dieType}\``
 
   } else {
     // first "column" is five spaces wide, "total" | "  min" | "  max"
