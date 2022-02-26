@@ -4,16 +4,26 @@ Discord integration for witchdice.com
 Invite with permissions link:
 https://discord.com/api/oauth2/authorize?client_id=937850556272226374&permissions=67584&scope=bot%20applications.commands
 
+Development app:
+https://discord.com/api/oauth2/authorize?client_id=947213521056321648&permissions=67584&scope=bot%20applications.commands
+
+
 Initial implementation by Shotch
+
 
 ## Start the server:
 node index.js
 
-Join a room by just adding it to room.json so the production bot doesn't know about it.
+
+## Publish slash commands
+Comment/uncomment the guild-specific or global command publishing lines in deploy-commands.js (highly recommend developing on a specific guild; the global commands take up to an hour to propogate.)
+
+node deploy-commands.js
 
 
 ## Watch the server on Google Compute Engine:
 pm2 logs
+
 
 ## Deploy an update
 - Update the deployed branch to main.
@@ -22,11 +32,12 @@ pm2 logs
 - pm2 kill
 - git pull
 - pm2 start index.js
-- pm2 save
 
 
-## Installation Steps (if applicable)
 
+
+
+## Installation Steps
 1. Clone repo
 2. Run `npm install`
 3. Add Discord credentials in a `.env` file		(`cat > .env`, then paste in)
@@ -43,7 +54,7 @@ GOOGLE_APPLICATION_CREDENTIALS=./firebase_auth.json`
 
 ### config.json
 `{
-	"clientId": "937850556272226374",
+	"clientId": "DISCORD CLIENT ID HERE",
 	"guildId": "DEV GUILD HERE",
 	"token": "BOT TOKEN HERE"
 }`

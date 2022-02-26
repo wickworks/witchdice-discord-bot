@@ -3,3 +3,5 @@ rooms.json
 firebase_auth.json
 node_modules/*
 config.json
+.env-prod
+config-prod.json
