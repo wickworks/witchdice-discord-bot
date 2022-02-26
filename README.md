@@ -16,7 +16,8 @@ node index.js
 
 
 ## Publish slash commands
-Comment/uncomment the guild-specific or global command publishing lines in deploy-commands.js (highly recommend developing on a specific guild; the global commands take up to an hour to propogate.)
+Comment/uncomment the guild-specific or global command publishing lines in deploy-commands.js
+(highly recommend developing on a specific guild; the global commands take up to an hour to propogate.)
 
 node deploy-commands.js
 

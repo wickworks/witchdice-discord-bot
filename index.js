@@ -258,7 +258,9 @@ async function editMessageInChannel(channelID, message, targetCreatedAt) {
 
   if (targetMessage) {
     console.log('>>>>> EDIT',channelID,' ::: ',message);
-    targetMessage.edit(message)
+    targetMessage.edit(message).catch(error =>
+      console.error('Failed to edit! :', error)
+    )
   }
 }
 
@@ -267,7 +269,9 @@ function sendMessagetoChannel(channelID, message) {
     const channel = client.channels.cache.get(channelID);
     if (channel && message) {
       console.log('>>>>> SEND',channelID,' ::: ',message);
-      channel.send(message);
+      channel.send(message).catch(error =>
+    		console.error('Failed to send! ', error)
+      );
     }
   } catch (e) {
     console.error('sendMessagetoChannel ERROR :', e)
