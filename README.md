@@ -27,10 +27,11 @@ pm2 logs
 
 
 ## Deploy an update
-- Update the deployed branch to main.
+- Merge `deployed` branch to `main`.
 - SSH into the cloud
 - cd witchdice-discord-bot
 - pm2 kill
+- git checkout deployed
 - git pull
 - pm2 start index.js
 
