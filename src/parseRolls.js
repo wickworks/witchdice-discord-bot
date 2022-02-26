@@ -197,11 +197,16 @@ function parseAttack(rollSnapshot, roomName) {
     // ATTACKS
     if (attack_roll) {
 
-      // attack_line += `❮ ${String(attack_roll)} ❯ `
-      attack_line += `〔 ${String(attack_roll)} 〕`
-      if (name) attack_line += `${name.padStart(MIN_WIDTH - attack_line.length - 1, ' ')}`
+      // low-roll attacks are used to mark roll-less abilities
+      if (parseInt(attack_roll) <= -10) {
+        if (name) { attack_line += `${name} \n` }
 
-      attack_line += `\n`
+      // normal attack roll
+      } else {
+        attack_line += `〔 ${String(attack_roll)} 〕`
+        if (name) attack_line += `${name.padStart(MIN_WIDTH - attack_line.length - 1, ' ')}`
+        attack_line += `\n`
+      }
 
     // SAVES
     } else if (save_dc) {
