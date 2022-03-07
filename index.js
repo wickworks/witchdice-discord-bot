@@ -106,18 +106,19 @@ function joinRoom(channelID, roomName){
       allConnectedChannels[channelID] = roomName
       saveConnectedChannels()
       listenForRolls(channelID, roomName)
-      replyString = `This channel is now in the room '${roomName}'.`
+      replyString = `This channel is now in the room \`${roomName}\``
 
     // It switched from another room to this one
     } else if (allConnectedChannels[channelID] !== roomName) {
+      const oldRoom = allConnectedChannels[channelID]
       stopListeningForRolls(channelID, roomName)
       allConnectedChannels[channelID] = roomName
       saveConnectedChannels()
       listenForRolls(channelID, roomName)
-      replyString = `This channel has switched from the room '${allConnectedChannels[channelID]}' to '${roomName}'.`
+      replyString = `This channel has switched from the room \`${oldRoom}\` to \`${roomName}\`.`
 
     } else {
-      replyString = `This channel was already in the room '${allConnectedChannels[channelID]}'!`
+      replyString = `This channel was already in the room \`${allConnectedChannels[channelID]}\`!`
     }
   }
 
@@ -135,7 +136,7 @@ function leaveCurrentRoom(channelID){
     saveConnectedChannels()
     stopListeningForRolls(channelID, roomName)
   } else {
-    replyString = `Could not leave the room because I have no record for channel \`${channelID}\``
+    replyString = `Could not leave the room because I have no record for channel ID \`${channelID}\`.`
     console.log("ERROR: could not leave room ", channelID, " because I don't think we were in it!");
   }
 
