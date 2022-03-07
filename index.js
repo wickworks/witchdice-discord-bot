@@ -127,12 +127,15 @@ function joinRoom(channelID, roomName){
 function leaveCurrentRoom(channelID){
   console.log(`channel leaving room : ${channelID}`);
   const roomName = allConnectedChannels[channelID]
+
+  let replyString = ''
   if (roomName) {
-    let replyString = `This channel has left the room \`${roomName}\`. It will no longer show rolls from Witchdice.`
+    replyString = `This channel has left the room \`${roomName}\`. It will no longer show rolls from Witchdice.`
     delete allConnectedChannels[channelID]
     saveConnectedChannels()
     stopListeningForRolls(channelID, roomName)
   } else {
+    replyString = `Could not leave the room because I have no record for channel \`${channelID}\``
     console.log("ERROR: could not leave room ", channelID, " because I don't think we were in it!");
   }
 
