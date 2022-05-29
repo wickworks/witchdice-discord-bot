@@ -13,6 +13,9 @@ const parseRoll = (rollSnapshot, roomName) => {
   case 'attack':
     embed = parseAttack(rollSnapshot, roomName)
     break;
+  case 'text':
+    embed = parseBroadcastText(rollSnapshot, roomName)
+    break;
   }
 
   return embed
@@ -108,8 +111,6 @@ function parseDicebag(rollSnapshot, roomName) {
       // everything but the last group gets a +
       // if (i !== Object.keys(resultsByDieType).length-1) result_column += " +"
 
-
-
       // keep the column the same length by padding the shorter row with spaces
       column_width = Math.max(type_column.length, result_column.length)
       type_column = type_column.padEnd(column_width, " ")
@@ -120,6 +121,13 @@ function parseDicebag(rollSnapshot, roomName) {
     });
 
     rolls_text = `\`\`\`${type_line}\n${results_line}\`\`\``
+  }
+
+  // Any accompanying message?
+  if (rollSnapshot.message) {
+    const parsedMessage = parseHtmlTags(rollSnapshot.message)
+    // rolls_text += `\n\`\`\`${parsedMessage}\`\`\``
+    rolls_text += `\n${parsedMessage}`
   }
 
   // inside a command, event listener, etc.
@@ -144,8 +152,6 @@ function parseDicebag(rollSnapshot, roomName) {
 
   return embed
 }
-
-
 
 function parseAttack(rollSnapshot, roomName) {
   let author_name = ""      // goes author name
@@ -238,7 +244,7 @@ function parseAttack(rollSnapshot, roomName) {
     if (applies) {
       let attack_width = attack_line.length
       attack_line += `\n`
-      attack_line += ` ∘ ${applies.replaceAll('<br>',`\n ∘ `)}`
+      attack_line += ` ∘ ${parseHtmlTags(applies)}`
     }
 
     attack_line += `\n`
@@ -282,6 +288,30 @@ function parseAttack(rollSnapshot, roomName) {
   return embed
 }
 
+function parseBroadcastText(rollSnapshot, roomName) {
+  let author_name = ""      // goes author name
+  let title_text = ""       // goes in embed title
+  let message_text = ""     // goes in embed description
+
+  // ~ character name ~
+  author_name = rollSnapshot["name"] || "[UNKNOWN]"
+  // ~ name of the thing we're broadcasting ~
+  title_text = rollSnapshot["title"]
+  // ~ the text of the thing broadcasted ~
+  // message_text = `\`\`\`${parseHtmlTags(rollSnapshot["message"])}\`\`\``
+  message_text = parseHtmlTags(rollSnapshot["message"])
+
+  // inside a command, event listener, etc.
+  const embed = new MessageEmbed()
+  	.setColor('#' + getColorFromTime(rollSnapshot["createdAt"]))
+    .setAuthor({ name: author_name })
+  	.setTitle(title_text)
+  	.setDescription(message_text)
+
+  return embed
+}
+
+
 // ----------------------------------
 // ------------ UTILS ---------------
 // ----------------------------------
@@ -298,6 +328,11 @@ function centerText(text, padChar, totalWidth) {
   returnText = ''.padEnd(SIDE_PADDING,padChar) + returnText + ''.padStart(SIDE_PADDING,padChar)
   if (text.length % 2 === 1) returnText += padChar
   return returnText
+}
+
+// turn html into something that looks nice in discord
+function parseHtmlTags(message) {
+  return message.replaceAll('<br>',`\n ∘ `).replaceAll('<b>',`[`).replaceAll('</b>',`]`)
 }
 
 // function getFooterObject(roomName, rollSnapshot) {
