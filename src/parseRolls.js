@@ -332,7 +332,11 @@ function centerText(text, padChar, totalWidth) {
 
 // turn html into something that looks nice in discord
 function parseHtmlTags(message) {
-  return message.replaceAll('<br>',`\n ∘ `).replaceAll('<b>',`[`).replaceAll('</b>',`]`)
+  return message
+    .replaceAll(/<li>|<br>/g,`\n ∘ `)
+    .replaceAll('<b>','[')
+    .replaceAll('</b>',']')
+    .replaceAll(/<\/li>|<\/ul>|<ul>/g,'')
 }
 
 // function getFooterObject(roomName, rollSnapshot) {
