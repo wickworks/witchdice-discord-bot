@@ -27,29 +27,15 @@ function parseDicebag(rollSnapshot, roomName) {
   let result_text = ""      // goes in embed title
   let rolls_text = ""       // goes in embed description
 
-  let summary_mode = rollSnapshot["conditions"]  // total | high | low
-  console.log('summary_mode',summary_mode);
+  // total | highest | lowest | count
+  const conditions = (rollSnapshot["conditions"] || '').split(" ")
+  const summaryMode = conditions[0]        // "highest" from "highest 3"
+  const summaryModeValue = parseInt(conditions[1])       // "3" from "highest 3"
 
   // extracts the roll objects from the firebase data into just an array
   allRolls = Object.keys(rollSnapshot)
     .filter(eventKey => eventKey.startsWith('roll-'))
     .map(rollKey => rollSnapshot[rollKey])
-
-  // Collect all results by dietype e.g. {'d4':[2,3,3], 'd20':[20]}
-  resultsByDieType = {}
-  signsByDieType = {}
-  allRolls.forEach(roll => {
-    const dieType = roll.dieType;
-    const result = roll.result;
-    if (resultsByDieType[dieType]) {
-      resultsByDieType[dieType].push(result)
-    } else {
-      resultsByDieType[dieType] = [result]
-    }
-    signsByDieType[dieType] = roll.sign // all die type groups are assumed to have the same sign ("total" doesn't use this)
-  })
-
-  console.log('resultsByDieType',resultsByDieType);
 
   // ~ character name ~
   author_name = rollSnapshot["name"] || "[UNKNOWN]"
@@ -58,23 +44,55 @@ function parseDicebag(rollSnapshot, roomName) {
   // decorative_text = ""// "🌺 💀 🌺"
 
   // ~ summary // total ~
-  if (summary_mode === "high") {
-    const high_values = Object.keys(resultsByDieType).map(dieType => Math.max(...resultsByDieType[dieType]) * signsByDieType[dieType])
-    const sum = high_values.reduce((a,b) => a+b)
-    result_text = String(sum)
+  let resultTotal = 0;
+  if (summaryMode === 'total') {
+    allRolls.forEach(roll => resultTotal += roll.result)
 
-  } else if (summary_mode === "low") {
-    const low_values = Object.keys(resultsByDieType).map(dieType => Math.min(...resultsByDieType[dieType]) * signsByDieType[dieType])
-    const sum = low_values.reduce((a,b) => a+b)
-    result_text = String(sum)
+  // something more complicated
+  } else {
+    // collect all the rolls into their respective types
+    let rollsByType = {}
+    allRolls.forEach(roll => rollsByType[roll.dieType] = [])
+    allRolls.forEach(roll => rollsByType[roll.dieType].push(roll.result))
 
-  } else { // "total"
-    const all_values = allRolls.map(roll => roll.result * roll.sign)
-    const sum = all_values.reduce((a,b) => a+b)
-    result_text = String(sum)
+    if (summaryMode === 'lowest' || summaryMode === 'highest') {
+      const sortOrder = (summaryMode === 'lowest') ? -1 : 1
+
+      Object.keys(rollsByType).forEach(dieType => {
+        // sort all the rolls by lowest- or highest-first
+        rollsByType[dieType].sort((a,b) => (Math.abs(a) < Math.abs(b)) ? sortOrder : -1 * sortOrder)
+
+        // trim all the rolls by the summary mode value
+        rollsByType[dieType] = rollsByType[dieType].slice(0, summaryModeValue)
+
+        // sum them all up
+        resultTotal += rollsByType[dieType].reduce((prev,roll) => prev + roll, 0)
+      });
+
+    } else if (summaryMode === 'count') {
+      Object.keys(rollsByType).forEach(dieType => {
+        rollsByType[dieType].forEach(roll => {
+          if (Math.abs(roll) >= summaryModeValue) resultTotal += 1
+        })
+      })
+    }
   }
 
-  result_text = `⦑  ${result_text}  ⦒`
+  result_text = `⦑  ${String(resultTotal)}  ⦒`
+
+  // Collect all results by dietype e.g. {'d4':[2,3,3], 'd20':[20]}
+  resultsByDieType = {}
+  signsByDieType = {}
+  allRolls.forEach(roll => {
+    const dieType = roll.dieType;
+    const result = Math.abs(roll.result);
+    if (resultsByDieType[dieType]) {
+      resultsByDieType[dieType].push(result)
+    } else {
+      resultsByDieType[dieType] = [result]
+    }
+    signsByDieType[dieType] = Math.sign(roll.sign) // all die type groups are assumed to have the same sign ("total" doesn't use this)
+  })
 
   // ~ what-was-rolled graph ~    (or one-liner if it was a simple roll)
   if (allRolls.length === 1) {
@@ -83,13 +101,24 @@ function parseDicebag(rollSnapshot, roomName) {
     result_text = `${result_text}                            \`${allRolls[0].dieType}\``
 
   } else {
-    // first "column" is five spaces wide, "total" | "  min" | "  max"
-    let type_line = "     "
-    let mode_text = {"low": "min", "high": "max", "total": "total"}
-    let results_line = (mode_text[summary_mode] || '').padEnd(5, " ")
+    // first "column" is eight spaces wide, "total" | "  min" | "  max 2" | "count 4+"
+    let mode_text
+    if (summaryMode === 'lowest') {
+      mode_text = 'min'
+      if (summaryModeValue > 1) mode_text = `${mode_text} ${summaryModeValue}`
+    } else if (summaryMode === 'highest') {
+      mode_text = 'max'
+      if (summaryModeValue > 1) mode_text = `${mode_text} ${summaryModeValue}`
+    } else if (summaryMode === 'count') {
+      mode_text = `count ${summaryModeValue}+`
+    } else {
+      mode_text = `${summaryMode} ${summaryModeValue}`
+    }
+    let results_line = mode_text.padStart(8, " ")
+    let type_line = "        "
 
     // the following columns are: die type on top, results grouped below.
-    let group_join_char = summary_mode === "total" ? "+" : ","
+    let group_join_char = summaryMode === "total" ? "+" : ","
     Object.keys(resultsByDieType).forEach((dieType,i) => {
       let type_column = ''
       let result_column = ''
