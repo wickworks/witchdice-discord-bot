@@ -28,7 +28,7 @@ function parseDicebag(rollSnapshot, roomName) {
   let rolls_text = ""       // goes in embed description
 
   // total | highest | lowest | count
-  const conditions = (rollSnapshot["conditions"] || '').split(" ")
+  const conditions = (rollSnapshot["conditions"] || 'total').split(" ")
   const summaryMode = conditions[0]        // "highest" from "highest 3"
   const summaryModeValue = parseInt(conditions[1])       // "3" from "highest 3"
 
@@ -103,7 +103,9 @@ function parseDicebag(rollSnapshot, roomName) {
   } else {
     // first "column" is eight spaces wide, "total" | "  min" | "  max 2" | "count 4+"
     let mode_text
-    if (summaryMode === 'lowest') {
+    if (summaryMode === 'total') {
+      mode_text = 'total'
+    } else if (summaryMode === 'lowest') {
       mode_text = 'min'
       if (summaryModeValue > 1) mode_text = `${mode_text} ${summaryModeValue}`
     } else if (summaryMode === 'highest') {

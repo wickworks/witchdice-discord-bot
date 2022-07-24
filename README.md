@@ -12,9 +12,12 @@ Development app:
 https://discord.com/api/oauth2/authorize?client_id=947213521056321648&permissions=67584&scope=bot%20applications.commands
 
 
-## Start the server:
-node index.js
-
+## Develop locally locally:
+- node index.js
+- open discord channel with the development bot invited
+- tell that bot to listen to a room if it's not already
+- open that room on witchdice.com and make rolls
+- make modifications and restart the node server to see them
 
 ## Publish slash commands
 Comment/uncomment the guild-specific or global command publishing lines in deploy-commands.js
