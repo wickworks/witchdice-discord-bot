@@ -20,13 +20,12 @@ const parseEmote = (emoteKey, emoteSnapshot, roomName) => {
 function parseXCard(emoteSnapshot, roomName) {
   let result_text = `❌     X-card raised by ${emoteSnapshot.name}.     ❌`
 
-  // inside a command, event listener, etc.
-  const embed = new MessageEmbed()
-  	.setColor('#FF0000')
-    // .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
-  	.setTitle(result_text)
-
-  return embed
+  return {
+    color: '#FF0000',
+    // author: author_name,
+    result: title_text,
+    // details: message_text
+  }
 }
 
 

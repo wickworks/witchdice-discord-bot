@@ -4,8 +4,9 @@ const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
 
-const rollParser = require('./src/parseRolls.js');
-const emoteParser = require('./src/parseEmotes.js');
+const { getColorFromTime } = require('./src/parseRolls.js');
+const messageMaker = require('./src/messageMaker.js');
+
 const admin = require('firebase-admin');
 
 admin.initializeApp({
@@ -173,7 +174,7 @@ function listenForRolls(channelID, roomName) {
   const addedListener = dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added');
-      const embed = rollParser.parseRoll(snapshot.val(), roomName)
+      const embed = messageMaker.makeRollMessage(snapshot.val(), roomName)
       if (wasCreatedWithinLastMinute(snapshot.val().createdAt)) {
         sendMessagetoChannel(channelID, {embeds: [embed]})
       }
@@ -184,7 +185,7 @@ function listenForRolls(channelID, roomName) {
     if (snapshot) {
       console.log('child_changed');
       const snapshotVal = snapshot.val()
-      const embed = rollParser.parseRoll(snapshotVal, roomName)
+      const embed = messageMaker.makeRollMessage(snapshotVal, roomName)
       const targetCreatedAt = snapshotVal['createdAt']
       editMessageInChannel(channelID, {embeds: [embed]}, targetCreatedAt)
     }
@@ -195,7 +196,7 @@ function listenForRolls(channelID, roomName) {
   const emoteAddedListener = dbEmotesRef.on('child_added', (snapshot) => {
     if (snapshot) {
       console.log('child_added EMOTE');
-      const embed = emoteParser.parseEmote(snapshot.key, snapshot.val(), roomName)
+      const embed = messageMaker.makeEmoteMessage(snapshot.key, snapshot.val(), roomName)
       if (wasCreatedWithinLastMinute(snapshot.val().time)) {
         sendMessagetoChannel(channelID, {embeds: [embed]})
       }
@@ -205,7 +206,7 @@ function listenForRolls(channelID, roomName) {
   const emoteChangedListener = dbEmotesRef.on('child_changed', (snapshot) => {
     if (snapshot) {
       console.log('child_changed EMOTE');
-      const embed = emoteParser.parseEmote(snapshot.key, snapshot.val(), roomName)
+      const embed = messageMaker.makeEmoteMessage(snapshot.key, snapshot.val(), roomName)
       sendMessagetoChannel(channelID, {embeds: [embed]})
     }
   });

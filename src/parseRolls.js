@@ -1,4 +1,3 @@
-const { MessageEmbed } = require('discord.js');
 
 
 const parseRoll = (rollSnapshot, roomName) => {
@@ -161,27 +160,12 @@ function parseDicebag(rollSnapshot, roomName) {
     rolls_text += `\n${parsedMessage}`
   }
 
-  // inside a command, event listener, etc.
-  const embed = new MessageEmbed()
-  	.setColor('#' + getColorFromTime(rollSnapshot["createdAt"]))
-    .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
-  	.setTitle(result_text)
-  	.setDescription(rolls_text)
-    // .setFooter( getFooterObject(roomName, rollSnapshot) )
-
-    // .setURL('https://discord.js.org/')
-  	// .setThumbnail('https://i.imgur.com/AfFp7pu.png')
-  	// .addFields(
-  	// 	{ name: 'Regular field title', value: 'Some value here' },
-  	// 	{ name: '\u200B', value: '\u200B' },
-  	// 	{ name: 'Inline field title', value: 'Some value here', inline: true },
-  	// 	{ name: 'Inline field title', value: 'Some value here', inline: true },
-  	// )
-  	// .addField('Inline field title', 'Some value here', true)
-  	// .setImage('https://i.imgur.com/AfFp7pu.png')
-  	// .setTimestamp()
-
-  return embed
+  return {
+    color: '#' + getColorFromTime(rollSnapshot["createdAt"]),
+    author: author_name,
+    result: result_text,
+    details: rolls_text
+  }
 }
 
 function parseAttack(rollSnapshot, roomName) {
@@ -308,15 +292,12 @@ function parseAttack(rollSnapshot, roomName) {
     if (damageSum > 0) result_text = `${damageSum} damage`
   }
 
-  // inside a command, event listener, etc.
-  const embed = new MessageEmbed()
-  	.setColor('#' + getColorFromTime(rollSnapshot["createdAt"]))
-    .setAuthor({ name: author_name }) //, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
-  	.setTitle(result_text)
-  	.setDescription(rolls_text)
-    // .setFooter( getFooterObject(roomName, rollSnapshot) )
-
-  return embed
+  return {
+    color: '#' + getColorFromTime(rollSnapshot["createdAt"]),
+    author: author_name,
+    result: result_text,
+    details: rolls_text
+  }
 }
 
 function parseBroadcastText(rollSnapshot, roomName) {
@@ -332,14 +313,12 @@ function parseBroadcastText(rollSnapshot, roomName) {
   // message_text = `\`\`\`${parseHtmlTags(rollSnapshot["message"])}\`\`\``
   message_text = parseHtmlTags(rollSnapshot["message"])
 
-  // inside a command, event listener, etc.
-  const embed = new MessageEmbed()
-  	.setColor('#' + getColorFromTime(rollSnapshot["createdAt"]))
-    .setAuthor({ name: author_name })
-  	.setTitle(title_text)
-  	.setDescription(message_text)
-
-  return embed
+  return {
+    color: '#' + getColorFromTime(rollSnapshot["createdAt"]),
+    author: author_name,
+    result: title_text,
+    details: message_text
+  }
 }
 
 
