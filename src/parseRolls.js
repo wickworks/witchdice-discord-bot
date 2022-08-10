@@ -32,7 +32,7 @@ function parseDicebag(rollSnapshot, roomName) {
   const summaryModeValue = parseInt(conditions[1])       // "3" from "highest 3"
 
   // extracts the roll objects from the firebase data into just an array
-  allRolls = Object.keys(rollSnapshot)
+  let allRolls = Object.keys(rollSnapshot)
     .filter(eventKey => eventKey.startsWith('roll-'))
     .map(rollKey => rollSnapshot[rollKey])
 
@@ -80,8 +80,8 @@ function parseDicebag(rollSnapshot, roomName) {
   result_text = `⦑  ${String(resultTotal)}  ⦒`
 
   // Collect all results by dietype e.g. {'d4':[2,3,3], 'd20':[20]}
-  resultsByDieType = {}
-  signsByDieType = {}
+  let resultsByDieType = {}
+  let signsByDieType = {}
   allRolls.forEach(roll => {
     const dieType = roll.dieType;
     const result = Math.abs(roll.result);
@@ -142,7 +142,7 @@ function parseDicebag(rollSnapshot, roomName) {
       // if (i !== Object.keys(resultsByDieType).length-1) result_column += " +"
 
       // keep the column the same length by padding the shorter row with spaces
-      column_width = Math.max(type_column.length, result_column.length)
+      let column_width = Math.max(type_column.length, result_column.length)
       type_column = type_column.padEnd(column_width, " ")
       result_column = result_column.padEnd(column_width, " ")
 
