@@ -79,6 +79,8 @@ function parseDicebag(rollSnapshot, roomName) {
 
   result_text = `⦑  ${String(resultTotal)}  ⦒`
 
+  // console.log('allRolls',allRolls);
+
   // Collect all results by dietype e.g. {'d4':[2,3,3], 'd20':[20]}
   let resultsByDieType = {}
   let signsByDieType = {}
@@ -90,7 +92,7 @@ function parseDicebag(rollSnapshot, roomName) {
     } else {
       resultsByDieType[dieType] = [result]
     }
-    signsByDieType[dieType] = Math.sign(roll.sign) // all die type groups are assumed to have the same sign ("total" doesn't use this)
+    signsByDieType[dieType] = Math.sign(roll.result) // all die type groups are assumed to have the same sign ("total" doesn't use this)
   })
 
   // ~ what-was-rolled graph ~    (or one-liner if it was a simple roll)
