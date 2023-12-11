@@ -173,9 +173,9 @@ function listenForRolls(channelID, roomName) {
   const dbRollsRef = database.ref().child('rolls').child(roomName)
   const addedListener = dbRollsRef.on('child_added', (snapshot) => {
     if (snapshot) {
-      console.log('child_added');
-      const embed = messageMaker.makeRollMessage(snapshot.val(), roomName)
       if (wasCreatedWithinLastMinute(snapshot.val().createdAt)) {
+        console.log('child_added');
+        const embed = messageMaker.makeRollMessage(snapshot.val(), roomName)
         sendMessagetoChannel(channelID, {embeds: [embed]})
       }
     }
@@ -195,9 +195,9 @@ function listenForRolls(channelID, roomName) {
   const dbEmotesRef = database.ref().child('emotes').child(roomName)
   const emoteAddedListener = dbEmotesRef.on('child_added', (snapshot) => {
     if (snapshot) {
-      console.log('child_added EMOTE');
-      const embed = messageMaker.makeEmoteMessage(snapshot.key, snapshot.val(), roomName)
       if (wasCreatedWithinLastMinute(snapshot.val().time)) {
+        console.log('child_added EMOTE');
+        const embed = messageMaker.makeEmoteMessage(snapshot.key, snapshot.val(), roomName)
         sendMessagetoChannel(channelID, {embeds: [embed]})
       }
     }
