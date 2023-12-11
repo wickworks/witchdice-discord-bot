@@ -98,25 +98,30 @@ client.login(process.env.WITCHBOT_TOKEN);
 // ------------------------------------
 
 function joinRoom(channelID, roomName){
-  console.log(`Joining room : ${roomName}`);
   let replyString = ''
-
   if (roomName) {
+    var filteredRoomName = roomName.replace(/[^A-Za-z0-9-]/ig, '')
+    var nameIsValid = (roomName.indexOf('/') == -1 && filteredRoomName.length > 6)
+
+    console.log(`Joining room : ${filteredRoomName}`);
+    if (!nameIsValid || !filteredRoomName) {
+      replyString = `\`${roomName}\` is not a valid room name. It must have at least 7 characters and only consist of letters, numbers, and dashes.`
+
     // This channel wasn't connected to anything yet
-    if (!(channelID in allConnectedChannels)) {
-      allConnectedChannels[channelID] = roomName
+    } else if (!(channelID in allConnectedChannels)) {
+      allConnectedChannels[channelID] = filteredRoomName
       saveConnectedChannels()
-      listenForRolls(channelID, roomName)
-      replyString = `This channel is now in the room \`${roomName}\``
+      listenForRolls(channelID, filteredRoomName)
+      replyString = `This channel is now in the room \`${filteredRoomName}\``
 
     // It switched from another room to this one
-    } else if (allConnectedChannels[channelID] !== roomName) {
+    } else if (allConnectedChannels[channelID] !== filteredRoomName) {
       const oldRoom = allConnectedChannels[channelID]
-      stopListeningForRolls(channelID, roomName)
-      allConnectedChannels[channelID] = roomName
+      stopListeningForRolls(channelID, filteredRoomName)
+      allConnectedChannels[channelID] = filteredRoomName
       saveConnectedChannels()
-      listenForRolls(channelID, roomName)
-      replyString = `This channel has switched from the room \`${oldRoom}\` to \`${roomName}\`.`
+      listenForRolls(channelID, filteredRoomName)
+      replyString = `This channel has switched from the room \`${oldRoom}\` to \`${filteredRoomName}\`.`
 
     } else {
       replyString = `This channel was already in the room \`${allConnectedChannels[channelID]}\`!`
