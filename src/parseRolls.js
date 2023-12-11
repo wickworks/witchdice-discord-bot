@@ -348,7 +348,7 @@ function parseHtmlTags(message) {
     .replaceAll(/<li>|<br>/g,`\n ∘ `)
     .replaceAll('<b>','[')
     .replaceAll('</b>',']')
-    .replaceAll(/<\/li>|<\/ul>|<ul>/g,'')
+    .replaceAll(/<\/li>|<\/ul>|<ul>|<\/p>|<p>/g,'')
 }
 
 // function getFooterObject(roomName, rollSnapshot) {
