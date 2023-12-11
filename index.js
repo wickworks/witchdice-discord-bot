@@ -4,7 +4,7 @@ const fs = require('fs');
 const util = require('util');
 require('dotenv').config();
 
-const { getColorFromTime } = require('./src/parseRolls.js');
+const { parseRoll, getColorFromTime } = require('./src/parseRolls.js');
 const messageMaker = require('./src/messageMaker.js');
 
 const admin = require('firebase-admin');

@@ -12,7 +12,7 @@ Development app:
 https://discord.com/api/oauth2/authorize?client_id=947213521056321648&permissions=67584&scope=bot%20applications.commands
 
 
-## Develop locally locally:
+## Develop locally:
 - node index.js
 - open discord channel with the development bot invited
 - tell that bot to listen to a room if it's not already

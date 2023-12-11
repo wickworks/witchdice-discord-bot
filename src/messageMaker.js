@@ -1,7 +1,7 @@
 const { MessageEmbed } = require('discord.js');
 
-const rollParser = require('./src/parseRolls.js');
-const emoteParser = require('./src/parseEmotes.js');
+const rollParser = require('./parseRolls.js');
+const emoteParser = require('./parseEmotes.js');
 
 exports.makeRollMessage = (rollSnapshot, roomName) => {
   const parsedRoll = rollParser.parseRoll(rollSnapshot, roomName)
@@ -25,7 +25,7 @@ exports.makeRollMessage = (rollSnapshot, roomName) => {
     // .setTimestamp()
 
   return embed
-)
+}
 
 exports.makeEmoteMessage = (emoteKey, emoteSnapshot, roomName) => {
   const parsedEmote = emoteParser.parseEmote(emoteKey, emoteSnapshot, roomName)
