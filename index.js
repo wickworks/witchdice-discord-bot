@@ -2,6 +2,7 @@ const { Client, Intents } = require('discord.js');
 const { clientId } = require('./config.json');
 const fs = require('fs');
 const util = require('util');
+const rollParser = require('./src/parseRolls.js');
 require('dotenv').config();
 
 const { parseRoll, getColorFromTime } = require('./src/parseRolls.js');
